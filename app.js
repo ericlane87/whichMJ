@@ -86,29 +86,29 @@ const characters = {
   }
 };
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+let canvas;
+let ctx;
 
-const stageNameEl = document.getElementById("stageName");
-const briefTitleEl = document.getElementById("briefTitle");
-const briefTextEl = document.getElementById("briefText");
-const stageNotesEl = document.getElementById("stageNotes");
-const healthFillEl = document.getElementById("healthFill");
-const energyFillEl = document.getElementById("energyFill");
-const scoreValueEl = document.getElementById("scoreValue");
-const waveValueEl = document.getElementById("waveValue");
-const overlayEl = document.getElementById("overlay");
-const overlayEyebrowEl = document.getElementById("overlayEyebrow");
-const overlayTitleEl = document.getElementById("overlayTitle");
-const overlayTextEl = document.getElementById("overlayText");
-const overlayButtonEl = document.getElementById("overlayButton");
-const startButtonEl = document.getElementById("startButton");
-const characterButtons = [...document.querySelectorAll(".character-card")];
-const touchButtons = [...document.querySelectorAll(".touch-btn")];
+let stageNameEl;
+let briefTitleEl;
+let briefTextEl;
+let stageNotesEl;
+let healthFillEl;
+let energyFillEl;
+let scoreValueEl;
+let waveValueEl;
+let overlayEl;
+let overlayEyebrowEl;
+let overlayTitleEl;
+let overlayTextEl;
+let overlayButtonEl;
+let startButtonEl;
+let characterButtons = [];
+let touchButtons = [];
 
 const world = {
-  width: canvas.width,
-  height: canvas.height,
+  width: 960,
+  height: 540,
   floorY: 432,
   gravity: 1800
 };
@@ -138,7 +138,8 @@ const state = {
   projectiles: [],
   effects: [],
   cameraShake: 0,
-  lastTime: 0
+  lastTime: 0,
+  demoTimer: 0
 };
 
 function createPlayer(type) {
@@ -215,6 +216,46 @@ function startRun() {
   updateStageBrief();
   spawnCurrentEncounter();
   hideOverlay();
+  updateHud();
+}
+
+function startDemo() {
+  state.screen = "menu";
+  state.stageIndex = 0;
+  state.waveIndex = 0;
+  state.score = 0;
+  state.player = createPlayer(state.selectedCharacter);
+  state.player.x = 240;
+  state.player.energy = 72;
+  state.enemies = [
+    createEnemy("swarm", 690),
+    createEnemy("dancer", 820),
+    createEnemy("drone", 900)
+  ];
+  state.projectiles = [];
+  state.effects = [];
+  state.demoTimer = 0;
+  updateStageBrief();
+  stageNameEl.textContent = "Live Demo Arena";
+  briefTitleEl.textContent = "Fast Mobile Controls";
+  briefTextEl.textContent = "Move, jump, and tap action. The arena is already running so you can see the game before starting.";
+  stageNotesEl.innerHTML = "";
+  [
+    "Court MJ is heavier and stronger.",
+    "Stage MJ is faster and gets a double jump.",
+    "Tap Start Fight when you want control."
+  ].forEach((note) => {
+    const item = document.createElement("li");
+    item.textContent = note;
+    stageNotesEl.appendChild(item);
+  });
+  waveValueEl.textContent = "Demo Mode";
+  showOverlay(
+    "Live Demo",
+    "Pick Your MJ",
+    "The fight is already animating behind this card. Pick a style and tap Start Fight.",
+    "Start"
+  );
   updateHud();
 }
 
@@ -390,6 +431,9 @@ function spawnProjectile(source, kind) {
 
 function updatePlayer(dt) {
   const player = state.player;
+  if (!player) {
+    return;
+  }
   const kit = characters[player.type];
 
   if (player.invulnTimer > 0) {
@@ -639,7 +683,83 @@ function updateHud() {
   scoreValueEl.textContent = `Score ${state.score}`;
 }
 
+function updateSelectionUi() {
+  characterButtons.forEach((button) => {
+    button.classList.toggle("selected", button.dataset.character === state.selectedCharacter);
+  });
+}
+
+function updateDemo(dt, time) {
+  if (!state.player) {
+    startDemo();
+    return;
+  }
+
+  const player = state.player;
+  state.demoTimer += dt;
+
+  if (state.enemies.length === 0) {
+    state.enemies = [
+      createEnemy("swarm", 720),
+      createEnemy(Math.random() > 0.5 ? "guard" : "dancer", 860),
+      createEnemy("drone", 930)
+    ];
+    player.energy = Math.min(player.maxEnergy, player.energy + 24);
+  }
+
+  const closestEnemy = state.enemies.reduce((closest, enemy) => {
+    if (!closest) {
+      return enemy;
+    }
+    return Math.abs(enemy.x - player.x) < Math.abs(closest.x - player.x) ? enemy : closest;
+  }, null);
+
+  input.left = false;
+  input.right = false;
+  input.attackQueued = false;
+  input.jumpQueued = false;
+  input.dodgeQueued = false;
+
+  if (closestEnemy) {
+    const dx = closestEnemy.x - player.x;
+    player.facing = Math.sign(dx) || 1;
+
+    if (Math.abs(dx) > 96) {
+      if (dx > 0) {
+        input.right = true;
+      } else {
+        input.left = true;
+      }
+    } else if (player.attackTimer <= 0 && player.specialTimer <= 0) {
+      input.attackQueued = true;
+    }
+
+    if (!player.onGround && player.type === "stage" && player.canDoubleJump && Math.random() < 0.02) {
+      input.jumpQueued = true;
+    }
+
+    if (closestEnemy.type === "drone" && player.onGround && Math.random() < 0.015) {
+      input.jumpQueued = true;
+    }
+  }
+
+  if (Math.random() < 0.004) {
+    input.dodgeQueued = true;
+  }
+
+  updatePlayer(dt);
+  updateEnemies(dt, time);
+  updateProjectiles(dt);
+  updateEffects(dt);
+  updateHud();
+}
+
 function update(dt, time) {
+  if (state.screen === "menu") {
+    updateDemo(dt, time);
+    return;
+  }
+
   if (state.screen !== "playing") {
     updateEffects(dt);
     updateHud();
@@ -859,11 +979,12 @@ function drawEffects() {
 }
 
 function drawCharacterHint() {
-  const kit = characters[state.selectedCharacter];
+  const activeType = state.player ? state.player.type : state.selectedCharacter;
+  const kit = characters[activeType];
   ctx.save();
   ctx.fillStyle = "rgba(255,255,255,0.88)";
   ctx.font = "700 18px Space Grotesk";
-  ctx.fillText(`${kit.name}: ${kit.description}`, 26, 34);
+    ctx.fillText(`${kit.name}: ${kit.description}`, 26, 34);
   ctx.restore();
 }
 
@@ -981,25 +1102,79 @@ function bindTouchButton(button) {
   button.addEventListener("mouseleave", end);
 }
 
-characterButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.selectedCharacter = button.dataset.character;
-    characterButtons.forEach((item) => item.classList.toggle("selected", item === button));
-    drawCharacterHint();
+function initGame() {
+  canvas = document.getElementById("gameCanvas");
+  stageNameEl = document.getElementById("stageName");
+  briefTitleEl = document.getElementById("briefTitle");
+  briefTextEl = document.getElementById("briefText");
+  stageNotesEl = document.getElementById("stageNotes");
+  healthFillEl = document.getElementById("healthFill");
+  energyFillEl = document.getElementById("energyFill");
+  scoreValueEl = document.getElementById("scoreValue");
+  waveValueEl = document.getElementById("waveValue");
+  overlayEl = document.getElementById("overlay");
+  overlayEyebrowEl = document.getElementById("overlayEyebrow");
+  overlayTitleEl = document.getElementById("overlayTitle");
+  overlayTextEl = document.getElementById("overlayText");
+  overlayButtonEl = document.getElementById("overlayButton");
+  startButtonEl = document.getElementById("startButton");
+  characterButtons = [...document.querySelectorAll("[data-character]")];
+  touchButtons = [...document.querySelectorAll(".touch-btn")];
+
+  if (
+    !canvas ||
+    !stageNameEl ||
+    !briefTitleEl ||
+    !briefTextEl ||
+    !stageNotesEl ||
+    !healthFillEl ||
+    !energyFillEl ||
+    !scoreValueEl ||
+    !waveValueEl ||
+    !overlayEl ||
+    !overlayEyebrowEl ||
+    !overlayTitleEl ||
+    !overlayTextEl ||
+    !overlayButtonEl ||
+    !startButtonEl
+  ) {
+    console.error("Which MJ failed to initialize because required DOM nodes were not found.");
+    return;
+  }
+
+  ctx = canvas.getContext("2d");
+  if (!ctx) {
+    console.error("Which MJ failed to initialize because the canvas context could not be created.");
+    return;
+  }
+
+  world.width = canvas.width;
+  world.height = canvas.height;
+
+  characterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedCharacter = button.dataset.character;
+      updateSelectionUi();
+      if (state.screen === "menu") {
+        startDemo();
+      }
+      drawCharacterHint();
+    });
   });
-});
 
-touchButtons.forEach(bindTouchButton);
-startButtonEl.addEventListener("click", startRun);
-overlayButtonEl.addEventListener("click", continueFromOverlay);
-window.addEventListener("keydown", handleKeyDown);
-window.addEventListener("keyup", handleKeyUp);
+  touchButtons.forEach(bindTouchButton);
+  startButtonEl.addEventListener("click", startRun);
+  overlayButtonEl.addEventListener("click", continueFromOverlay);
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
 
-updateStageBrief();
-showOverlay(
-  "Action Briefing",
-  "Pick Your MJ",
-  "Court MJ is heavier and hits harder. Stage MJ is quicker, dodges farther, and gets a double jump. Mobile controls use move, jump, and action. A full meter upgrades action into a special.",
-  "Ready"
-);
-requestAnimationFrame(frame);
+  updateSelectionUi();
+  startDemo();
+  requestAnimationFrame(frame);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initGame, { once: true });
+} else {
+  initGame();
+}

@@ -39,9 +39,9 @@ kbd {
 }
 
 .shell {
-  width: min(1360px, calc(100vw - 28px));
+  width: min(1240px, calc(100vw - 16px));
   margin: 0 auto;
-  padding: 28px 0 36px;
+  padding: 8px 0 18px;
 }
 
 .hero {
@@ -50,6 +50,10 @@ kbd {
   gap: 24px;
   align-items: end;
   padding: 8px 0 24px;
+}
+
+.hero-inline {
+  padding: 8px 4px 12px;
 }
 
 .eyebrow {
@@ -103,7 +107,6 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr) 300px;
   gap: 18px;
 }
 
@@ -269,7 +272,7 @@ kbd {
 }
 
 .panel-arena {
-  padding: 16px;
+  padding: 12px;
   display: grid;
   gap: 14px;
 }
@@ -330,6 +333,43 @@ kbd {
   background: #040c13;
 }
 
+.quick-start {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.character-pill,
+.start-run-btn {
+  pointer-events: auto;
+}
+
+.character-pill {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(7, 17, 26, 0.68);
+  color: var(--text);
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.character-pill.selected {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.start-run-btn {
+  padding-inline: 20px;
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -384,23 +424,31 @@ canvas {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(5, 12, 18, 0.52);
+  background: rgba(5, 12, 18, 0.18);
 }
 
 .overlay.hidden {
   display: none;
 }
 
+.overlay-compact {
+  align-items: start;
+  justify-items: center;
+  padding-top: 72px;
+  pointer-events: none;
+}
+
 .overlay-card {
   width: min(480px, 100%);
-  padding: 24px;
+  padding: 18px 20px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(7, 17, 26, 0.9);
+  background: rgba(7, 17, 26, 0.84);
   text-align: center;
   display: grid;
   gap: 14px;
   box-shadow: var(--shadow);
+  pointer-events: auto;
 }
 
 .overlay-card p {
@@ -414,21 +462,28 @@ canvas {
   margin-bottom: 18px;
 }
 
-@media (max-width: 1180px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
+.bottom-strip {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 
+@media (max-width: 1180px) {
   .hero {
     flex-direction: column;
     align-items: start;
+  }
+
+  .bottom-strip {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
   .shell {
-    width: min(100vw - 18px, 1360px);
-    padding-top: 18px;
+    width: min(100vw - 8px, 1360px);
+    padding-top: 4px;
   }
 
   .hud {
@@ -439,6 +494,23 @@ canvas {
     grid-template-columns: 1fr;
   }
 
+  .hero-copy {
+    font-size: 0.95rem;
+  }
+
+  .quick-start {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .character-pill {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
   .mobile-controls {
     inset: auto 10px 10px 10px;
   }
@@ -447,5 +519,14 @@ canvas {
     min-width: 68px;
     min-height: 68px;
     font-size: 0.95rem;
+  }
+
+  .overlay-compact {
+    padding-top: 118px;
+  }
+
+  .overlay-card {
+    width: min(100%, 340px);
+    gap: 10px;
   }
 }
