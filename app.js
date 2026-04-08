@@ -180,8 +180,8 @@ class MenuScene extends Phaser.Scene {
     }, 0);
 
     this.cards = {
-      court: this.createCharacterCard(330, 360, FIGHTERS.court, "court-portrait"),
-      stage: this.createCharacterCard(700, 360, FIGHTERS.stage, "stage-portrait")
+      court: this.createCharacterCard(330, 360, FIGHTERS.court, "court-fighter"),
+      stage: this.createCharacterCard(700, 360, FIGHTERS.stage, "stage-fighter")
     };
 
     this.selectionGlow = this.add.rectangle(330, 360, 250, 340)
@@ -199,7 +199,8 @@ class MenuScene extends Phaser.Scene {
     const card = this.add.rectangle(0, 0, 250, 340, 0x0d1824, 0.92)
       .setStrokeStyle(2, 0x2a3947, 1)
       .setInteractive({ useHandCursor: true });
-    const portrait = this.add.image(0, -48, texture).setDisplaySize(220, 260);
+    const glow = this.add.circle(0, -44, 92, fighter.color, 0.18);
+    const portrait = this.add.image(0, -40, texture).setDisplaySize(168, 206);
     const name = fitText(this, fighter.name, 0, 116, {
       fontFamily: "Archivo Black",
       fontSize: "28px",
@@ -211,7 +212,7 @@ class MenuScene extends Phaser.Scene {
       color: "#d1c4b4"
     });
 
-    container.add([card, portrait, name, sub]);
+    container.add([card, glow, portrait, name, sub]);
     card.on("pointerdown", () => {
       this.selected = fighter.id;
       this.updateSelection();
