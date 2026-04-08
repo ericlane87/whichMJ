@@ -1,61 +1,63 @@
-# Which MJ?
+# Which MJ? Action Direction
 
-## Core Hook
+## Chosen Style
 
-`Which MJ?` is a browser-based parody guessing game. Each round shows a move description, visual style, or performance clue, and the player must decide which MJ it belongs to:
+The strongest production path for this project is a `2D side-scrolling browser action game` with `bold silhouette-cartoon visuals`.
 
-- `Court MJ`: inspired by high-flying basketball energy
-- `Stage MJ`: inspired by high-precision dance and performance energy
+This style was chosen because it gives the best mix of:
 
-The joke works because both MJs share initials, strong body language, and iconic movement styles.
+- readable combat
+- clear difference between the two playable MJs
+- strong browser performance without external engines
+- more visual impact than a text quiz or a basic top-down prototype
 
-## Safer Creative Direction
+## Core Premise
 
-To avoid building the game around direct celebrity likenesses, the game should use:
+The player chooses one of two original parody archetypes before each run:
 
-- parody silhouettes
-- exaggerated archetypes
-- original names like `Court MJ` and `Stage MJ`
-- no official logos, songs, uniforms, or direct portrait copies
+- `Court MJ`: heavier, stronger, basketball-driven combat
+- `Stage MJ`: faster, more evasive, rhythm-driven combat
 
-This keeps the game original while preserving the hook.
+The real meaning of `Which MJ?` becomes:
 
-## First Version Game Loop
+`Which MJ is the right pick for this stage, enemy set, and boss fight?`
 
-1. Read the clue.
-2. Pick `Court MJ` or `Stage MJ`.
-3. Get instant feedback.
-4. Move to the next level.
-5. Finish with a rank based on score and lives remaining.
+## Combat Identity
 
-## Level Structure
+### Court MJ
 
-The first campaign should have 8 levels:
+- stronger base health
+- bigger hit impact
+- ranged ball special
+- slower movement
+- better against armored enemies
 
-1. Obvious basketball clue
-2. Obvious dance clue
-3. Mixed basketball clue with stylish wording
-4. Mixed dance clue with visual wording
-5. Arena or crowd fake-out
-6. Strong rhythm-based clue
-7. High-pressure sports finale setup
-8. Performance encore finale
+### Stage MJ
 
-## Difficulty Plan
+- faster movement
+- double-jump mobility
+- smoother dodge flow
+- rhythm-burst special
+- better against swarms and pressure stages
 
-- `Early game`: teach the difference quickly
-- `Mid game`: mix vocabulary from both worlds
-- `Late game`: use fake-outs where one or two strong nouns decide the answer
+## Enemy Set
 
-## Expansion Ideas
+- `Swarmers`: fast melee rushers
+- `Shield Guards`: slower armored enemies
+- `Paparazzi Drones`: ranged pressure enemies
+- `Rival Dancers`: mobile combo enemies
+- `Brutes`: heavy damage tanks
+- `Final Spotlight Boss`: hybrid enemy with ranged and melee pressure
 
-- timed mode
-- combo multiplier
-- animated silhouettes
-- sound cue rounds
-- versus mode for 2 players on one keyboard
-- endless remix mode using randomized clue packs
+## Stage Flow
 
-## Tone
+1. Select an MJ
+2. Enter a combat stage
+3. Clear enemy waves
+4. Move to the next arena
+5. Defeat the final boss
+6. Finish with a score and replay
 
-The tone should be fast, playful, stylish, and readable in under a few seconds per round. It should feel like a game-show quiz mixed with a rhythm parody, not a serious trivia game.
+## Why This Is Better
+
+The action version makes the title meaningful through mechanics instead of only text prompts. The player is not just guessing who fits a clue. The player is making a combat choice and then proving that choice in play.
