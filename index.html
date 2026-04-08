@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Which MJ?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Browser Prototype</p>
+      <h1>Which MJ?</h1>
+      <p class="hero-copy">
+        Pick the right MJ by reading the move, vibe, and visual clues. One MJ dominates the court.
+        The other owns the stage.
+      </p>
+      <div class="hero-meta">
+        <span>Basketball MJ</span>
+        <span>Dance MJ</span>
+        <span>Fast rounds</span>
+      </div>
+    </header>
+
+    <main class="game-grid">
+      <section class="card status-card">
+        <div class="status-top">
+          <div>
+            <p class="label">Level</p>
+            <h2 id="levelTitle">1</h2>
+          </div>
+          <div>
+            <p class="label">Score</p>
+            <h2 id="scoreValue">0</h2>
+          </div>
+          <div>
+            <p class="label">Lives</p>
+            <h2 id="livesValue">3</h2>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-labels">
+            <span>Progress</span>
+            <span id="progressText">1 / 8</span>
+          </div>
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card challenge-card">
+        <p class="label">Prompt</p>
+        <h2 id="promptTitle">Which MJ owns this move?</h2>
+        <p id="promptText" class="prompt-text"></p>
+
+        <div class="arena">
+          <article class="fighter fighter-jordan">
+            <div class="fighter-art" aria-hidden="true">
+              <div class="silhouette silhouette-hoops"></div>
+            </div>
+            <h3>Jordan-Style MJ</h3>
+            <p>Explosive footwork, court pressure, big-air finishes.</p>
+            <button class="choice-btn" data-choice="jordan">Pick Court MJ</button>
+          </article>
+
+          <article class="fighter fighter-jackson">
+            <div class="fighter-art" aria-hidden="true">
+              <div class="silhouette silhouette-dance"></div>
+            </div>
+            <h3>Jackson-Style MJ</h3>
+            <p>Rhythm control, spotlight tricks, impossible glide energy.</p>
+            <button class="choice-btn" data-choice="jackson">Pick Stage MJ</button>
+          </article>
+        </div>
+
+        <div class="feedback-row">
+          <p id="feedbackText" class="feedback">Choose the better match.</p>
+          <button id="nextButton" class="next-btn" disabled>Next Level</button>
+        </div>
+      </section>
+
+      <aside class="card design-card">
+        <p class="label">Mode Notes</p>
+        <h2>Core Design</h2>
+        <ul id="designNotes" class="notes-list"></ul>
+      </aside>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

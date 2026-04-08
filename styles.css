@@ -1,0 +1,341 @@
+:root {
+  --bg: #f7f0dd;
+  --ink: #16130f;
+  --panel: rgba(255, 251, 242, 0.88);
+  --line: rgba(22, 19, 15, 0.12);
+  --court: #d46a2e;
+  --stage: #0f766e;
+  --accent: #e11d48;
+  --good: #166534;
+  --bad: #b91c1c;
+  --shadow: 0 24px 70px rgba(22, 19, 15, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(225, 29, 72, 0.14), transparent 34%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.16), transparent 28%),
+    linear-gradient(180deg, #fbf5e7 0%, #f1e7cb 100%);
+}
+
+.page-shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero {
+  padding: 24px 0 28px;
+}
+
+.eyebrow,
+.label {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: "Archivo Black", sans-serif;
+  line-height: 0.95;
+}
+
+h1 {
+  font-size: clamp(3.4rem, 8vw, 6.4rem);
+  letter-spacing: -0.04em;
+}
+
+.hero-copy {
+  max-width: 720px;
+  margin: 16px 0 0;
+  font-size: 1.1rem;
+  line-height: 1.55;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.hero-meta span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1.8fr 1fr;
+  gap: 18px;
+}
+
+.card {
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.status-card,
+.design-card {
+  align-self: start;
+}
+
+.status-top {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.status-top h2 {
+  font-size: 2rem;
+}
+
+.progress-wrap {
+  margin-top: 24px;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(22, 19, 15, 0.08);
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--court), var(--accent));
+  transition: width 260ms ease;
+}
+
+.challenge-card {
+  min-height: 620px;
+}
+
+.prompt-text {
+  margin: 18px 0 24px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.arena {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.fighter {
+  border-radius: 24px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.fighter-jordan .fighter-art {
+  background: linear-gradient(135deg, rgba(212, 106, 46, 0.28), rgba(225, 29, 72, 0.08));
+}
+
+.fighter-jackson .fighter-art {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.26), rgba(17, 24, 39, 0.08));
+}
+
+.fighter-art {
+  position: relative;
+  height: 220px;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.silhouette {
+  position: absolute;
+  inset: 14px;
+}
+
+.silhouette-hoops::before,
+.silhouette-hoops::after,
+.silhouette-dance::before,
+.silhouette-dance::after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+
+.silhouette-hoops::before {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  right: 22px;
+  top: 18px;
+  background:
+    linear-gradient(90deg, transparent 48%, rgba(22, 19, 15, 0.5) 48%, rgba(22, 19, 15, 0.5) 52%, transparent 52%),
+    linear-gradient(transparent 48%, rgba(22, 19, 15, 0.5) 48%, rgba(22, 19, 15, 0.5) 52%, transparent 52%),
+    radial-gradient(circle at center, #f97316 0%, #ea580c 72%);
+  box-shadow: inset 0 0 0 2px rgba(22, 19, 15, 0.18);
+}
+
+.silhouette-hoops::after {
+  left: 54px;
+  bottom: 22px;
+  width: 92px;
+  height: 130px;
+  background: var(--ink);
+  clip-path: polygon(28% 0%, 57% 0%, 67% 14%, 80% 34%, 92% 62%, 78% 70%, 72% 100%, 46% 92%, 26% 100%, 18% 76%, 0% 54%, 8% 28%, 18% 14%);
+  transform: rotate(-12deg);
+}
+
+.silhouette-dance::before {
+  left: 48px;
+  bottom: 24px;
+  width: 92px;
+  height: 130px;
+  background: var(--ink);
+  clip-path: polygon(38% 0%, 62% 0%, 68% 12%, 84% 28%, 70% 46%, 94% 68%, 76% 74%, 58% 100%, 44% 72%, 18% 92%, 10% 76%, 28% 58%, 6% 36%, 26% 22%);
+  transform: skewX(-8deg);
+}
+
+.silhouette-dance::after {
+  width: 132px;
+  height: 8px;
+  right: 14px;
+  bottom: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.75);
+  transform: rotate(-10deg);
+}
+
+.fighter h3 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.fighter p {
+  margin: 0 0 16px;
+  line-height: 1.55;
+}
+
+.choice-btn,
+.next-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
+}
+
+.choice-btn:hover,
+.next-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.choice-btn[data-choice="jordan"] {
+  background: var(--court);
+  color: #fff7ef;
+}
+
+.choice-btn[data-choice="jackson"] {
+  background: var(--stage);
+  color: #effffc;
+}
+
+.next-btn {
+  background: var(--ink);
+  color: #fff;
+  max-width: 180px;
+}
+
+.next-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.feedback-row {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.feedback {
+  margin: 0;
+  min-height: 48px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.feedback.good {
+  color: var(--good);
+}
+
+.feedback.bad {
+  color: var(--bad);
+}
+
+.notes-list {
+  padding-left: 18px;
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 1040px) {
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .challenge-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100vw - 20px, 1180px);
+    padding-top: 20px;
+  }
+
+  .arena {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .next-btn {
+    max-width: none;
+  }
+}
