@@ -16,10 +16,10 @@
         <div>
           <p class="eyebrow">Browser Action Game</p>
           <h1>Which MJ?</h1>
-          <p class="hero-copy">Pick an MJ, tap start, and fight. The arena below shows motion immediately.</p>
+          <p class="hero-copy">Start on the menu, pick one MJ, then enter the fight.</p>
         </div>
         <div class="hero-tags">
-          <span>Live Demo</span>
+          <span>Pick One</span>
           <span>Mobile First</span>
           <span>Action Combat</span>
         </div>
@@ -28,7 +28,7 @@
       <div class="hud">
         <div class="hud-block">
           <p class="eyebrow">Stage</p>
-          <h2 id="stageName">Live Demo Arena</h2>
+          <h2 id="stageName">Character Select</h2>
         </div>
         <div class="hud-block">
           <p class="eyebrow">Health</p>
@@ -40,7 +40,7 @@
         </div>
         <div class="hud-mini">
           <span id="scoreValue">Score 0</span>
-          <span id="waveValue">Demo Mode</span>
+          <span id="waveValue">Menu</span>
         </div>
       </div>
 
@@ -66,10 +66,10 @@
 
         <div id="overlay" class="overlay overlay-compact">
           <div class="overlay-card">
-            <p id="overlayEyebrow" class="eyebrow">Live Demo</p>
+            <p id="overlayEyebrow" class="eyebrow">Character Select</p>
             <h2 id="overlayTitle">Pick Your MJ</h2>
             <p id="overlayText">
-              Court MJ hits harder. Stage MJ moves faster. The action should already be visible behind this card.
+              Pick one fighter, then start the action.
             </p>
             <button id="overlayButton" class="primary-button">Start</button>
           </div>
@@ -81,10 +81,10 @@
       <aside class="panel panel-brief">
         <div class="panel-heading">
           <p class="eyebrow">How To Play</p>
-          <h2 id="briefTitle">Fast Mobile Controls</h2>
+          <h2 id="briefTitle">Pick One Fighter</h2>
         </div>
         <p id="briefText" class="brief-copy">
-          Move, jump, and hit action. When your meter fills, action becomes a special automatically.
+          Choose the heavier bald fighter or the slimmer long-haired fighter, then jump into the stage.
         </p>
         <ul id="stageNotes" class="notes-list"></ul>
       </aside>
@@ -100,20 +100,20 @@
             <span class="card-glow card-glow-court"></span>
             <span class="card-art court-art" aria-hidden="true"></span>
             <strong>Court MJ</strong>
-            <span>Higher health, heavier strikes, stronger against armored enemies.</span>
+            <span>Bald, darker-skinned, heavier build. Higher health and stronger strikes.</span>
           </button>
 
           <button class="character-card" data-character="stage">
             <span class="card-glow card-glow-stage"></span>
             <span class="card-art stage-art" aria-hidden="true"></span>
             <strong>Stage MJ</strong>
-            <span>Faster movement, double jump, better against swarms and pressure.</span>
+            <span>Slimmer, lighter-skinned, long-haired. Faster movement and cleaner air control.</span>
           </button>
         </div>
       </section>
     </section>
   </div>
 
-  <script src="app.js?v=20260408-4"></script>
+  <script src="app.js?v=20260408-5"></script>
 </body>
 </html>

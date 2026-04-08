@@ -191,44 +191,48 @@ h1 {
 }
 
 .court-art::before {
-  right: 18px;
-  top: 16px;
-  width: 42px;
-  height: 42px;
+  left: 38px;
+  top: 18px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: radial-gradient(circle at center, #ffb100 0%, #ff7a18 75%);
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.2);
+  background: #5c3422;
 }
 
 .court-art::after {
-  left: 34px;
+  left: 28px;
   bottom: 10px;
-  width: 68px;
-  height: 90px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82));
-  clip-path: polygon(36% 0%, 62% 0%, 78% 18%, 94% 54%, 77% 63%, 68% 100%, 42% 91%, 20% 100%, 10% 72%, 0% 52%, 12% 20%);
-  opacity: 0.88;
+  width: 80px;
+  height: 86px;
+  background:
+    linear-gradient(180deg, transparent 0 14%, #ff7a18 14% 58%, #f3f4f6 58% 100%);
+  clip-path: polygon(30% 0%, 68% 0%, 78% 14%, 92% 48%, 76% 60%, 68% 100%, 40% 92%, 18% 100%, 10% 72%, 0% 48%, 14% 16%);
+  opacity: 0.96;
 }
 
 .stage-art::before {
-  left: 32px;
-  bottom: 12px;
-  width: 68px;
-  height: 92px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
-  clip-path: polygon(42% 0%, 62% 2%, 74% 20%, 92% 40%, 72% 54%, 92% 72%, 70% 78%, 52% 100%, 44% 76%, 18% 92%, 8% 74%, 28% 52%, 10% 34%, 24% 16%);
-  opacity: 0.88;
+  left: 36px;
+  top: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #b97352;
+  box-shadow:
+    -12px -2px 0 0 #141414,
+    12px -1px 0 0 #141414,
+    -14px 18px 0 0 #141414,
+    14px 18px 0 0 #141414;
 }
 
 .stage-art::after {
-  right: 18px;
-  bottom: 30px;
-  width: 86px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 0 16px rgba(19, 199, 185, 0.7);
-  transform: rotate(-8deg);
+  left: 26px;
+  bottom: 10px;
+  width: 84px;
+  height: 90px;
+  background:
+    linear-gradient(180deg, transparent 0 14%, #13c7b9 14% 58%, #e5e7eb 58% 100%);
+  clip-path: polygon(34% 0%, 66% 0%, 76% 14%, 92% 34%, 74% 50%, 92% 72%, 72% 78%, 54% 100%, 42% 74%, 16% 92%, 8% 74%, 26% 54%, 10% 36%, 22% 16%);
+  opacity: 0.96;
 }
 
 .control-box {

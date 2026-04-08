@@ -58,6 +58,9 @@ const characters = {
     name: "Court MJ",
     color: "#ff7a18",
     accent: "#ffb100",
+    skin: "#5c3422",
+    hair: null,
+    outfit: "#f7f0e8",
     speed: 300,
     jump: 690,
     health: 135,
@@ -73,6 +76,9 @@ const characters = {
     name: "Stage MJ",
     color: "#13c7b9",
     accent: "#60a5fa",
+    skin: "#b97352",
+    hair: "#121212",
+    outfit: "#f4f5f7",
     speed: 355,
     jump: 720,
     health: 112,
@@ -138,8 +144,7 @@ const state = {
   projectiles: [],
   effects: [],
   cameraShake: 0,
-  lastTime: 0,
-  demoTimer: 0
+  lastTime: 0
 };
 
 function createPlayer(type) {
@@ -219,41 +224,40 @@ function startRun() {
   updateHud();
 }
 
-function startDemo() {
+function showMenu() {
   state.screen = "menu";
   state.stageIndex = 0;
   state.waveIndex = 0;
   state.score = 0;
   state.player = createPlayer(state.selectedCharacter);
-  state.player.x = 240;
-  state.player.energy = 72;
+  state.player.x = 270;
+  state.player.energy = 20;
+  state.player.facing = 1;
   state.enemies = [
-    createEnemy("swarm", 690),
-    createEnemy("dancer", 820),
-    createEnemy("drone", 900)
+    createEnemy("guard", 760),
+    createEnemy("dancer", 860)
   ];
   state.projectiles = [];
   state.effects = [];
-  state.demoTimer = 0;
   updateStageBrief();
-  stageNameEl.textContent = "Live Demo Arena";
-  briefTitleEl.textContent = "Fast Mobile Controls";
-  briefTextEl.textContent = "Move, jump, and tap action. The arena is already running so you can see the game before starting.";
+  stageNameEl.textContent = "Character Select";
+  briefTitleEl.textContent = "Pick One Fighter";
+  briefTextEl.textContent = "Choose your MJ first. Court MJ is the stronger bruiser. Stage MJ is the quicker pressure fighter.";
   stageNotesEl.innerHTML = "";
   [
-    "Court MJ is heavier and stronger.",
-    "Stage MJ is faster and gets a double jump.",
-    "Tap Start Fight when you want control."
+    "Court MJ: bald, darker-skinned, heavier build.",
+    "Stage MJ: slimmer, lighter-skinned, long-haired.",
+    "Tap Start Fight after you choose."
   ].forEach((note) => {
     const item = document.createElement("li");
     item.textContent = note;
     stageNotesEl.appendChild(item);
   });
-  waveValueEl.textContent = "Demo Mode";
+  waveValueEl.textContent = "Menu";
   showOverlay(
-    "Live Demo",
+    "Character Select",
     "Pick Your MJ",
-    "The fight is already animating behind this card. Pick a style and tap Start Fight.",
+    "Pick one MJ, then hit Start Fight.",
     "Start"
   );
   updateHud();
@@ -689,74 +693,10 @@ function updateSelectionUi() {
   });
 }
 
-function updateDemo(dt, time) {
-  if (!state.player) {
-    startDemo();
-    return;
-  }
-
-  const player = state.player;
-  state.demoTimer += dt;
-
-  if (state.enemies.length === 0) {
-    state.enemies = [
-      createEnemy("swarm", 720),
-      createEnemy(Math.random() > 0.5 ? "guard" : "dancer", 860),
-      createEnemy("drone", 930)
-    ];
-    player.energy = Math.min(player.maxEnergy, player.energy + 24);
-  }
-
-  const closestEnemy = state.enemies.reduce((closest, enemy) => {
-    if (!closest) {
-      return enemy;
-    }
-    return Math.abs(enemy.x - player.x) < Math.abs(closest.x - player.x) ? enemy : closest;
-  }, null);
-
-  input.left = false;
-  input.right = false;
-  input.attackQueued = false;
-  input.jumpQueued = false;
-  input.dodgeQueued = false;
-
-  if (closestEnemy) {
-    const dx = closestEnemy.x - player.x;
-    player.facing = Math.sign(dx) || 1;
-
-    if (Math.abs(dx) > 96) {
-      if (dx > 0) {
-        input.right = true;
-      } else {
-        input.left = true;
-      }
-    } else if (player.attackTimer <= 0 && player.specialTimer <= 0) {
-      input.attackQueued = true;
-    }
-
-    if (!player.onGround && player.type === "stage" && player.canDoubleJump && Math.random() < 0.02) {
-      input.jumpQueued = true;
-    }
-
-    if (closestEnemy.type === "drone" && player.onGround && Math.random() < 0.015) {
-      input.jumpQueued = true;
-    }
-  }
-
-  if (Math.random() < 0.004) {
-    input.dodgeQueued = true;
-  }
-
-  updatePlayer(dt);
-  updateEnemies(dt, time);
-  updateProjectiles(dt);
-  updateEffects(dt);
-  updateHud();
-}
-
 function update(dt, time) {
   if (state.screen === "menu") {
-    updateDemo(dt, time);
+    updateEffects(dt);
+    updateHud();
     return;
   }
 
@@ -860,28 +800,43 @@ function drawPlayer() {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(player.facing, 1);
-  ctx.fillStyle = flash;
   ctx.globalAlpha = player.invulnTimer > 0 && Math.floor(player.invulnTimer * 30) % 2 === 0 ? 0.55 : 1;
 
+  ctx.fillStyle = kit.skin;
   ctx.beginPath();
   ctx.arc(0, -78, 15, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillRect(-11, -66, 22, 44);
-  ctx.fillRect(-22, -44, 44, 14);
+  if (player.type === "stage") {
+    ctx.fillStyle = kit.hair;
+    ctx.beginPath();
+    ctx.ellipse(0, -86, 18, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-15, -76, 8, 34);
+    ctx.fillRect(7, -76, 8, 34);
+  }
+
+  ctx.fillStyle = flash;
+  ctx.fillRect(-12, -66, 24, 48);
+  ctx.fillStyle = kit.outfit;
+  ctx.fillRect(-20, -46, 40, 18);
 
   if (player.type === "court") {
-    ctx.fillRect(-30, -22, 18, 42);
-    ctx.fillRect(12, -20, 16, 42);
-    ctx.fillRect(-10, -22, 14, 52);
-    ctx.fillRect(2, -22, 14, 52);
+    ctx.fillStyle = kit.color;
+    ctx.fillRect(-31, -22, 18, 42);
+    ctx.fillRect(13, -20, 16, 42);
+    ctx.fillStyle = "#f2f2f2";
+    ctx.fillRect(-11, -22, 14, 52);
+    ctx.fillRect(3, -22, 14, 52);
     ctx.beginPath();
     ctx.arc(28, -42, 10, 0, Math.PI * 2);
     ctx.fillStyle = kit.accent;
     ctx.fill();
   } else {
+    ctx.fillStyle = kit.color;
     ctx.fillRect(-30, -20, 16, 44);
     ctx.fillRect(14, -34, 12, 48);
+    ctx.fillStyle = "#e5e7eb";
     ctx.fillRect(-12, -22, 12, 56);
     ctx.fillRect(4, -34, 12, 64);
     ctx.strokeStyle = kit.accent;
@@ -1156,7 +1111,7 @@ function initGame() {
       state.selectedCharacter = button.dataset.character;
       updateSelectionUi();
       if (state.screen === "menu") {
-        startDemo();
+        showMenu();
       }
       drawCharacterHint();
     });
@@ -1169,7 +1124,7 @@ function initGame() {
   window.addEventListener("keyup", handleKeyUp);
 
   updateSelectionUi();
-  startDemo();
+  showMenu();
   requestAnimationFrame(frame);
 }
 
