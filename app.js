@@ -82,6 +82,11 @@ class BootScene extends Phaser.Scene {
     super("boot");
   }
 
+  preload() {
+    this.load.svg("court-portrait", "assets/court-mj.svg");
+    this.load.svg("stage-portrait", "assets/stage-mj.svg");
+  }
+
   create() {
     this.makeTextures();
     this.scene.start("menu");
@@ -95,8 +100,6 @@ class BootScene extends Phaser.Scene {
     g.fillRoundedRect(0, 0, 220, 260, 28);
     g.generateTexture("panel-card", 220, 260);
 
-    this.makeFighterTexture("court-portrait", FIGHTERS.court);
-    this.makeFighterTexture("stage-portrait", FIGHTERS.stage);
     this.makeEnemyTexture("swarm");
     this.makeEnemyTexture("guard");
     this.makeEnemyTexture("dancer");
@@ -106,115 +109,6 @@ class BootScene extends Phaser.Scene {
 
     g.destroy();
   }
-
-  makeFighterTexture(key, fighter) {
-    const g = this.add.graphics();
-    g.fillStyle(0x0b1723, 1);
-    g.fillRoundedRect(0, 0, 220, 260, 28);
-    g.fillStyle(0x07111a, 1);
-    g.fillEllipse(110, 238, 148, 22);
-
-    if (fighter.id === "court") {
-      g.fillStyle(fighter.skin, 1);
-      g.fillCircle(110, 52, 23);
-      g.fillRoundedRect(100, 74, 20, 28, 10);
-      g.fillRoundedRect(72, 94, 20, 74, 10);
-      g.fillRoundedRect(128, 94, 20, 74, 10);
-
-      g.fillStyle(0x8f1d1d, 1);
-      g.beginPath();
-      g.moveTo(78, 88);
-      g.lineTo(142, 88);
-      g.lineTo(154, 158);
-      g.lineTo(66, 158);
-      g.closePath();
-      g.fillPath();
-      g.fillStyle(0xffffff, 1);
-      g.lineStyle(4, 0xffffff, 1);
-      g.strokeRoundedRect(76, 90, 68, 70, 18);
-      g.lineStyle();
-      g.fillRoundedRect(78, 156, 26, 74, 10);
-      g.fillRoundedRect(116, 156, 26, 74, 10);
-      g.fillStyle(0xd1d5db, 1);
-      g.fillRoundedRect(76, 224, 30, 12, 6);
-      g.fillRoundedRect(114, 224, 30, 12, 6);
-
-      const jersey = this.add.text(110, 125, "23", {
-        fontFamily: "Archivo Black",
-        fontSize: "30px",
-        color: "#ffffff"
-      }).setOrigin(0.5);
-      jersey.setDepth(10);
-      g.fillStyle(fighter.skin, 1);
-      g.fillRoundedRect(88, 162, 14, 34, 7);
-      g.fillRoundedRect(118, 162, 14, 34, 7);
-      g.fillStyle(fighter.accent, 1);
-      g.fillCircle(168, 128, 20);
-      g.lineStyle(3, 0xa34b00, 1);
-      g.strokeCircle(168, 128, 20);
-      g.lineBetween(148, 128, 188, 128);
-      g.lineBetween(168, 108, 168, 148);
-      g.lineBetween(156, 116, 180, 140);
-      g.lineBetween(180, 116, 156, 140);
-      g.generateTexture(key, 220, 260);
-      jersey.destroy();
-    } else {
-      g.fillStyle(fighter.skin, 1);
-      g.fillCircle(110, 54, 21);
-      g.fillStyle(0x111111, 1);
-      g.fillEllipse(110, 42, 54, 28);
-      g.fillRoundedRect(82, 46, 12, 82, 6);
-      g.fillRoundedRect(126, 46, 12, 82, 6);
-
-      g.fillStyle(fighter.skin, 1);
-      g.fillRoundedRect(98, 74, 24, 30, 10);
-      g.fillRoundedRect(74, 92, 16, 72, 8);
-      g.fillRoundedRect(130, 88, 16, 68, 8);
-
-      g.fillStyle(0x0f0f10, 1);
-      g.beginPath();
-      g.moveTo(82, 92);
-      g.lineTo(138, 92);
-      g.lineTo(150, 156);
-      g.lineTo(70, 156);
-      g.closePath();
-      g.fillPath();
-
-      g.fillStyle(0xeff1f4, 1);
-      g.beginPath();
-      g.moveTo(100, 94);
-      g.lineTo(120, 94);
-      g.lineTo(126, 156);
-      g.lineTo(94, 156);
-      g.closePath();
-      g.fillPath();
-
-      g.fillStyle(0xf7d046, 1);
-      g.fillRoundedRect(80, 98, 8, 50, 3);
-      g.fillRoundedRect(132, 98, 8, 50, 3);
-      g.fillRoundedRect(92, 90, 36, 8, 4);
-
-      g.fillStyle(0x0f0f10, 1);
-      g.fillRoundedRect(86, 156, 18, 72, 9);
-      g.fillRoundedRect(116, 152, 18, 76, 9);
-      g.fillStyle(0xffffff, 1);
-      g.fillRoundedRect(86, 212, 18, 12, 5);
-      g.fillRoundedRect(116, 212, 18, 12, 5);
-      g.fillStyle(0x0f0f10, 1);
-      g.fillRoundedRect(84, 224, 22, 8, 4);
-      g.fillRoundedRect(114, 224, 22, 8, 4);
-
-      g.lineStyle(8, fighter.accent, 1);
-      g.lineBetween(146, 110, 184, 98);
-      g.lineStyle(4, 0xddf7ff, 0.9);
-      g.lineBetween(154, 126, 192, 114);
-      g.lineStyle(5, 0xffffff, 0.9);
-      g.lineBetween(156, 140, 182, 164);
-      g.generateTexture(key, 220, 260);
-    }
-    g.destroy();
-  }
-
   makeEnemyTexture(type) {
     const config = ENEMIES[type];
     const [w, h] = config.size;
