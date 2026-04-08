@@ -272,6 +272,7 @@ class FightScene extends Phaser.Scene {
     this.attackCooldown = 0;
     this.specialCooldown = 0;
     this.touchState = { left: false, right: false };
+    this.ballState = null;
 
     this.buildArena();
     this.createPlayer();
@@ -372,7 +373,8 @@ class FightScene extends Phaser.Scene {
       right: "D",
       jump: "W",
       attack: "J",
-      special: "K"
+      special: "K",
+      ball: "E"
     });
 
     this.makeTouchButton(88, 644, 88, "Left", () => {
@@ -451,6 +453,7 @@ class FightScene extends Phaser.Scene {
 
     this.updateMovement();
     this.updateDribble(_time);
+    this.updateBallThrow(dt);
     this.updateEnemies(dt);
     this.updateUi();
     this.checkProgress();
@@ -494,10 +497,23 @@ class FightScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.special)) {
       this.trySpecial();
     }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.ball)) {
+      this.tryBallThrow();
+    }
   }
 
   updateDribble(time) {
     if (!this.dribbleBall) {
+      return;
+    }
+
+    if (this.ballState && this.ballState.mode !== "held") {
+      this.dribbleBall.setPosition(this.ballState.x, this.ballState.y);
+      this.dribbleCross1.setPosition(this.ballState.x, this.ballState.y);
+      this.dribbleCross2.setPosition(this.ballState.x, this.ballState.y);
+      this.dribbleBall.setVisible(true);
+      this.dribbleCross1.setVisible(true);
+      this.dribbleCross2.setVisible(true);
       return;
     }
 
@@ -516,6 +532,71 @@ class FightScene extends Phaser.Scene {
     this.dribbleBall.setAlpha(moving ? 1 : 0.8);
     this.dribbleCross1.setAlpha(moving ? 1 : 0.8);
     this.dribbleCross2.setAlpha(moving ? 1 : 0.8);
+  }
+
+  tryBallThrow() {
+    if (this.fighterKey !== "court" || !this.dribbleBall) {
+      return;
+    }
+
+    if (!this.ballState) {
+      this.ballState = { mode: "held", x: 0, y: 0, vx: 0, vy: 0, traveled: 0, hitIds: new Set() };
+    }
+
+    if (this.ballState.mode !== "held") {
+      return;
+    }
+
+    this.ballState.mode = "thrown";
+    this.ballState.x = this.player.x + 38;
+    this.ballState.y = this.player.y - 18;
+    this.ballState.vx = 560;
+    this.ballState.vy = -80;
+    this.ballState.traveled = 0;
+    this.ballState.hitIds = new Set();
+  }
+
+  updateBallThrow(dt) {
+    if (!this.ballState || this.ballState.mode === "held") {
+      return;
+    }
+
+    const ball = this.ballState;
+
+    if (ball.mode === "thrown") {
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+      ball.vy += 260 * dt;
+      ball.traveled += Math.abs(ball.vx * dt);
+
+      this.enemies.getChildren().forEach((enemy) => {
+        if (!enemy.active || ball.hitIds.has(enemy)) {
+          return;
+        }
+        const distance = Phaser.Math.Distance.Between(ball.x, ball.y, enemy.x, enemy.y - 18);
+        if (distance < 42) {
+          ball.hitIds.add(enemy);
+          this.damageEnemy(enemy, 22, 260);
+          ball.mode = "returning";
+        }
+      });
+
+      if (ball.x > GAME_W - 70 || ball.traveled > 360) {
+        ball.mode = "returning";
+      }
+    }
+
+    if (ball.mode === "returning") {
+      const targetX = this.player.x + 26;
+      const targetY = this.player.y - 30;
+      const angle = Phaser.Math.Angle.Between(ball.x, ball.y, targetX, targetY);
+      ball.x += Math.cos(angle) * 620 * dt;
+      ball.y += Math.sin(angle) * 620 * dt;
+
+      if (Phaser.Math.Distance.Between(ball.x, ball.y, targetX, targetY) < 26) {
+        ball.mode = "held";
+      }
+    }
   }
 
   tryJump() {
