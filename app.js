@@ -1,1135 +1,751 @@
-const stages = [
+const GAME_W = 1280;
+const GAME_H = 720;
+const FLOOR_Y = 590;
+
+const FIGHTERS = {
+  court: {
+    id: "court",
+    name: "Court MJ",
+    subtitle: "Bald power scorer",
+    color: 0xff7a18,
+    accent: 0xffb100,
+    skin: 0x4c2d1f,
+    speed: 320,
+    jump: 760,
+    health: 160,
+    attack: 18,
+    special: 34,
+    reach: 96
+  },
+  stage: {
+    id: "stage",
+    name: "Stage MJ",
+    subtitle: "Long-haired rhythm striker",
+    color: 0x19c8bb,
+    accent: 0x60a5fa,
+    skin: 0xb77453,
+    speed: 390,
+    jump: 820,
+    health: 124,
+    attack: 13,
+    special: 28,
+    reach: 100
+  }
+};
+
+const LEVELS = [
   {
-    name: "Tunnel Warm-Up",
-    note: "Swarmers rush in low. Shield guards force spacing. This stage teaches movement and timing.",
-    notes: [
-      "Recommended MJ: either one works here.",
-      "Enemies arrive in short waves so the player can learn.",
-      "Stage clear condition: survive all three waves."
-    ],
+    name: "Back Alley Warm-Up",
     waves: [
-      [{ type: "swarm", x: 820 }, { type: "swarm", x: 920 }],
-      [{ type: "swarm", x: 780 }, { type: "guard", x: 920 }],
-      [{ type: "guard", x: 820 }, { type: "swarm", x: 920 }, { type: "swarm", x: 1000 }]
+      ["swarm", "swarm"],
+      ["guard", "swarm"],
+      ["guard", "guard", "swarm"]
     ]
   },
   {
     name: "Neon Floor",
-    note: "Fast movers and ranged pressure test whether your MJ choice matches the stage rhythm.",
-    notes: [
-      "Recommended MJ: Stage MJ has an easier time controlling speed.",
-      "Ranged paparazzi drones punish straight-line movement.",
-      "Use dodge invulnerability to break pressure."
-    ],
     waves: [
-      [{ type: "dancer", x: 820 }, { type: "swarm", x: 940 }],
-      [{ type: "drone", x: 850 }, { type: "dancer", x: 940 }],
-      [{ type: "drone", x: 800 }, { type: "dancer", x: 910 }, { type: "swarm", x: 1000 }]
+      ["dancer", "swarm"],
+      ["drone", "dancer"],
+      ["drone", "guard", "dancer"]
     ]
   },
   {
     name: "Crown Court",
-    note: "Heavy enemies and mixed patterns make this the hardest standard stage before the boss.",
-    notes: [
-      "Recommended MJ: Court MJ can break armor more cleanly.",
-      "Large enemies absorb weak hits and punish greedy combos.",
-      "Meter management matters more than pure speed here."
-    ],
     waves: [
-      [{ type: "guard", x: 820 }, { type: "guard", x: 940 }],
-      [{ type: "brute", x: 880 }, { type: "swarm", x: 1000 }],
-      [{ type: "brute", x: 820 }, { type: "dancer", x: 930 }, { type: "drone", x: 1040 }]
+      ["guard", "guard"],
+      ["brute", "swarm"],
+      ["brute", "dancer", "drone"]
     ]
   },
   {
     name: "Final Spotlight",
-    note: "A combined-style boss uses rhythm feints and aerial pressure. Commit to your MJ and finish the run.",
-    notes: [
-      "Boss stage: no standard waves.",
-      "Learn the boss wind-up before spending your special.",
-      "The arena gets brighter as the fight escalates."
-    ],
-    boss: { type: "boss", x: 860 }
+    boss: "boss"
   }
 ];
 
-const characters = {
-  court: {
-    name: "Court MJ",
-    color: "#ff7a18",
-    accent: "#ffb100",
-    skin: "#5c3422",
-    hair: null,
-    outfit: "#f7f0e8",
-    speed: 300,
-    jump: 690,
-    health: 135,
-    attackDamage: 18,
-    specialDamage: 28,
-    attackReach: 74,
-    attackTime: 0.2,
-    energyGain: 12,
-    dodgeSpeed: 500,
-    description: "Heavy-impact style with stronger armor, bigger hits, and a fast ball special."
-  },
-  stage: {
-    name: "Stage MJ",
-    color: "#13c7b9",
-    accent: "#60a5fa",
-    skin: "#b97352",
-    hair: "#121212",
-    outfit: "#f4f5f7",
-    speed: 355,
-    jump: 720,
-    health: 112,
-    attackDamage: 13,
-    specialDamage: 24,
-    attackReach: 84,
-    attackTime: 0.14,
-    energyGain: 14,
-    dodgeSpeed: 620,
-    description: "Fast, evasive style with smoother mobility, better combo flow, and a rhythm burst special."
-  }
+const ENEMIES = {
+  swarm: { health: 28, speed: 190, damage: 10, color: 0xf97316, score: 75, size: [40, 70] },
+  guard: { health: 64, speed: 110, damage: 14, color: 0xfb7185, score: 140, size: [54, 94] },
+  dancer: { health: 38, speed: 210, damage: 11, color: 0x2dd4bf, score: 115, size: [42, 82] },
+  drone: { health: 24, speed: 128, damage: 9, color: 0x93c5fd, score: 90, size: [42, 42], air: true },
+  brute: { health: 124, speed: 78, damage: 19, color: 0xf43f5e, score: 240, size: [74, 116] },
+  boss: { health: 420, speed: 130, damage: 22, color: 0xfacc15, score: 1000, size: [96, 144], boss: true }
 };
 
-let canvas;
-let ctx;
-
-let stageNameEl;
-let briefTitleEl;
-let briefTextEl;
-let stageNotesEl;
-let healthFillEl;
-let energyFillEl;
-let scoreValueEl;
-let waveValueEl;
-let overlayEl;
-let overlayEyebrowEl;
-let overlayTitleEl;
-let overlayTextEl;
-let overlayButtonEl;
-let startButtonEl;
-let characterButtons = [];
-let touchButtons = [];
-
-const world = {
-  width: 960,
-  height: 540,
-  floorY: 432,
-  gravity: 1800
-};
-
-const input = {
-  left: false,
-  right: false,
-  jumpQueued: false,
-  attackQueued: false,
-  dodgeQueued: false
-};
-
-const tapState = {
-  leftLastTap: 0,
-  rightLastTap: 0
-};
-
-const state = {
-  selectedCharacter: "court",
-  screen: "menu",
-  stageIndex: 0,
-  waveIndex: 0,
-  stageStartedAt: 0,
-  score: 0,
-  player: null,
-  enemies: [],
-  projectiles: [],
-  effects: [],
-  cameraShake: 0,
-  lastTime: 0
-};
-
-function createPlayer(type) {
-  const kit = characters[type];
-  return {
-    type,
-    x: 160,
-    y: world.floorY,
-    vx: 0,
-    vy: 0,
-    width: 44,
-    height: 92,
-    facing: 1,
-    onGround: true,
-    health: kit.health,
-    maxHealth: kit.health,
-    energy: 0,
-    maxEnergy: 100,
-    attackTimer: 0,
-    specialTimer: 0,
-    dodgeTimer: 0,
-    hitTimer: 0,
-    invulnTimer: 0,
-    combo: 0,
-    canDoubleJump: type === "stage"
-  };
+function fitText(scene, text, x, y, style, origin = 0.5) {
+  return scene.add.text(x, y, text, style).setOrigin(origin);
 }
 
-function createEnemy(type, x) {
-  const configs = {
-    swarm: { health: 26, speed: 170, width: 34, height: 58, damage: 10, color: "#f97316", score: 60 },
-    guard: { health: 64, speed: 92, width: 44, height: 84, damage: 14, color: "#fb7185", score: 120 },
-    drone: { health: 22, speed: 106, width: 34, height: 34, damage: 8, color: "#93c5fd", score: 80, flying: true, cooldown: 1.6 },
-    dancer: { health: 34, speed: 210, width: 38, height: 72, damage: 11, color: "#2dd4bf", score: 90 },
-    brute: { health: 110, speed: 74, width: 62, height: 102, damage: 18, color: "#f43f5e", score: 200 },
-    boss: { health: 280, speed: 126, width: 78, height: 124, damage: 22, color: "#facc15", score: 800, cooldown: 1.2, boss: true }
-  };
-
-  const config = configs[type];
-  return {
-    type,
-    x,
-    y: config.flying ? 250 : world.floorY,
-    baseY: config.flying ? 250 : world.floorY,
-    vx: 0,
-    vy: 0,
-    width: config.width,
-    height: config.height,
-    health: config.health,
-    maxHealth: config.health,
-    speed: config.speed,
-    damage: config.damage,
-    color: config.color,
-    score: config.score,
-    hitTimer: 0,
-    attackTimer: 0,
-    cooldown: config.cooldown || 0.85,
-    flying: Boolean(config.flying),
-    boss: Boolean(config.boss),
-    phase: 0
-  };
-}
-
-function startRun() {
-  state.screen = "playing";
-  state.stageIndex = 0;
-  state.waveIndex = 0;
-  state.score = 0;
-  state.player = createPlayer(state.selectedCharacter);
-  state.enemies = [];
-  state.projectiles = [];
-  state.effects = [];
-  state.stageStartedAt = performance.now();
-  updateStageBrief();
-  spawnCurrentEncounter();
-  hideOverlay();
-  updateHud();
-}
-
-function showMenu() {
-  state.screen = "menu";
-  state.stageIndex = 0;
-  state.waveIndex = 0;
-  state.score = 0;
-  state.player = createPlayer(state.selectedCharacter);
-  state.player.x = 270;
-  state.player.energy = 20;
-  state.player.facing = 1;
-  state.enemies = [
-    createEnemy("guard", 760),
-    createEnemy("dancer", 860)
-  ];
-  state.projectiles = [];
-  state.effects = [];
-  updateStageBrief();
-  stageNameEl.textContent = "Character Select";
-  briefTitleEl.textContent = "Pick One Fighter";
-  briefTextEl.textContent = "Choose your MJ first. Court MJ is the stronger bruiser. Stage MJ is the quicker pressure fighter.";
-  stageNotesEl.innerHTML = "";
-  [
-    "Court MJ: bald, darker-skinned, heavier build.",
-    "Stage MJ: slimmer, lighter-skinned, long-haired.",
-    "Tap Start Fight after you choose."
-  ].forEach((note) => {
-    const item = document.createElement("li");
-    item.textContent = note;
-    stageNotesEl.appendChild(item);
-  });
-  waveValueEl.textContent = "Menu";
-  showOverlay(
-    "Character Select",
-    "Pick Your MJ",
-    "Pick one MJ, then hit Start Fight.",
-    "Start"
-  );
-  updateHud();
-}
-
-function updateStageBrief() {
-  const stage = stages[state.stageIndex];
-  stageNameEl.textContent = stage.name;
-  briefTitleEl.textContent = stage.name;
-  briefTextEl.textContent = stage.note;
-  stageNotesEl.innerHTML = "";
-  stage.notes.forEach((note) => {
-    const item = document.createElement("li");
-    item.textContent = note;
-    stageNotesEl.appendChild(item);
-  });
-  waveValueEl.textContent = stage.boss
-    ? "Boss Stage"
-    : `Wave ${Math.min(state.waveIndex + 1, stage.waves.length)} / ${stage.waves.length}`;
-}
-
-function spawnCurrentEncounter() {
-  const stage = stages[state.stageIndex];
-  state.enemies = [];
-  state.projectiles = [];
-
-  if (stage.boss) {
-    state.enemies.push(createEnemy(stage.boss.type, stage.boss.x));
-    return;
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super("boot");
   }
 
-  const wave = stage.waves[state.waveIndex];
-  wave.forEach((enemy) => {
-    state.enemies.push(createEnemy(enemy.type, enemy.x));
-  });
-}
-
-function queueStageTransition() {
-  if (state.stageIndex >= stages.length - 1) {
-    state.screen = "victory";
-    showOverlay(
-      "Run Cleared",
-      "You picked the right MJ and beat the full action build.",
-      `Final score: ${state.score}. Court MJ plays like a bruiser. Stage MJ plays like a stylish pressure fighter.`,
-      "Play Again"
-    );
-    return;
+  create() {
+    this.makeTextures();
+    this.scene.start("menu");
   }
 
-  state.stageIndex += 1;
-  state.waveIndex = 0;
-  updateStageBrief();
-  spawnCurrentEncounter();
-  state.player.x = 160;
-  state.player.y = world.floorY;
-  state.player.vx = 0;
-  state.player.vy = 0;
-  state.player.energy = Math.min(state.player.energy + 22, state.player.maxEnergy);
+  makeTextures() {
+    const g = this.add.graphics();
 
-  showOverlay(
-    "Stage Clear",
-    stages[state.stageIndex].name,
-    stages[state.stageIndex].note,
-    "Continue"
-  );
-  state.screen = "intermission";
-}
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRoundedRect(0, 0, 220, 260, 28);
+    g.generateTexture("panel-card", 220, 260);
 
-function advanceEncounter() {
-  const stage = stages[state.stageIndex];
+    this.makeFighterTexture("court-portrait", FIGHTERS.court);
+    this.makeFighterTexture("stage-portrait", FIGHTERS.stage);
+    this.makeEnemyTexture("swarm");
+    this.makeEnemyTexture("guard");
+    this.makeEnemyTexture("dancer");
+    this.makeEnemyTexture("drone");
+    this.makeEnemyTexture("brute");
+    this.makeEnemyTexture("boss");
 
-  if (stage.boss) {
-    queueStageTransition();
-    return;
+    g.destroy();
   }
 
-  if (state.waveIndex < stage.waves.length - 1) {
-    state.waveIndex += 1;
-    waveValueEl.textContent = `Wave ${state.waveIndex + 1} / ${stage.waves.length}`;
-    spawnCurrentEncounter();
-    spawnEffect(state.player.x + 120, world.floorY - 20, "Wave In", "#ffffff");
-    return;
-  }
+  makeFighterTexture(key, fighter) {
+    const g = this.add.graphics();
+    g.fillStyle(0x0b1723, 1);
+    g.fillRoundedRect(0, 0, 220, 260, 28);
+    g.fillStyle(0x07111a, 1);
+    g.fillEllipse(110, 238, 148, 22);
 
-  queueStageTransition();
-}
+    g.fillStyle(fighter.skin, 1);
+    g.fillCircle(110, 54, fighter.id === "court" ? 24 : 22);
+    if (fighter.id === "stage") {
+      g.fillStyle(0x131313, 1);
+      g.fillEllipse(110, 44, 56, 34);
+      g.fillRect(82, 54, 12, 72);
+      g.fillRect(126, 54, 12, 72);
+    }
 
-function showOverlay(eyebrow, title, text, buttonLabel) {
-  overlayEyebrowEl.textContent = eyebrow;
-  overlayTitleEl.textContent = title;
-  overlayTextEl.textContent = text;
-  overlayButtonEl.textContent = buttonLabel;
-  overlayEl.classList.remove("hidden");
-}
+    g.fillStyle(fighter.skin, 1);
+    g.fillRoundedRect(94, 76, 32, 40, 14);
+    g.fillRoundedRect(72, 88, 18, 72, 9);
+    g.fillRoundedRect(130, 84, 18, 72, 9);
 
-function hideOverlay() {
-  overlayEl.classList.add("hidden");
-}
+    g.fillStyle(fighter.color, 1);
+    g.fillRoundedRect(78, 96, 64, 60, 16);
+    g.fillStyle(0xf3f4f6, 1);
+    g.fillRect(88, 156, 18, 72);
+    g.fillRect(114, 156, 18, 72);
+    g.fillStyle(0xd6d6d6, 1);
+    g.fillRoundedRect(86, 224, 22, 10, 5);
+    g.fillRoundedRect(114, 224, 22, 10, 5);
 
-function continueFromOverlay() {
-  if (state.screen === "victory" || state.screen === "gameover") {
-    startRun();
-    return;
-  }
-
-  if (state.screen === "menu") {
-    startRun();
-    return;
-  }
-
-  if (state.screen === "intermission") {
-    state.screen = "playing";
-    hideOverlay();
-  }
-}
-
-function spawnEffect(x, y, text, color) {
-  state.effects.push({ x, y, text, color, life: 0.75 });
-}
-
-function spawnProjectile(source, kind) {
-  if (source === "player") {
-    const facing = state.player.facing;
-    const config = characters[state.player.type];
-
-    if (state.player.type === "court") {
-      state.projectiles.push({
-        owner: "player",
-        kind,
-        x: state.player.x + facing * 28,
-        y: state.player.y - 48,
-        vx: 560 * facing,
-        vy: -120,
-        radius: 12,
-        damage: config.specialDamage,
-        color: config.accent,
-        life: 1.15
-      });
+    if (fighter.id === "court") {
+      g.fillStyle(fighter.accent, 1);
+      g.fillCircle(162, 132, 22);
     } else {
-      state.projectiles.push({
-        owner: "player",
-        kind,
-        x: state.player.x + facing * 22,
-        y: state.player.y - 52,
-        vx: 420 * facing,
-        vy: 0,
-        radius: 18,
-        damage: config.specialDamage,
-        color: config.accent,
-        life: 0.5,
-        pulse: true
-      });
+      g.lineStyle(8, fighter.accent, 1);
+      g.lineBetween(148, 108, 186, 96);
+      g.lineStyle(4, 0xddf7ff, 0.85);
+      g.lineBetween(156, 124, 194, 112);
     }
 
-    state.player.energy = 0;
-    state.player.specialTimer = 0.36;
-    state.cameraShake = 10;
-    return;
+    g.generateTexture(key, 220, 260);
+    g.destroy();
   }
 
-  const enemy = source;
-  state.projectiles.push({
-    owner: "enemy",
-    kind,
-    x: enemy.x - 12,
-    y: enemy.y - enemy.height * 0.6,
-    vx: -280,
-    vy: 0,
-    radius: enemy.boss ? 16 : 10,
-    damage: enemy.boss ? 18 : 9,
-    color: enemy.color,
-    life: enemy.boss ? 1.4 : 1
-  });
-}
+  makeEnemyTexture(type) {
+    const config = ENEMIES[type];
+    const [w, h] = config.size;
+    const g = this.add.graphics();
+    g.fillStyle(config.color, 1);
 
-function updatePlayer(dt) {
-  const player = state.player;
-  if (!player) {
-    return;
-  }
-  const kit = characters[player.type];
-
-  if (player.invulnTimer > 0) {
-    player.invulnTimer -= dt;
-  }
-  if (player.hitTimer > 0) {
-    player.hitTimer -= dt;
-  }
-  if (player.attackTimer > 0) {
-    player.attackTimer -= dt;
-  }
-  if (player.specialTimer > 0) {
-    player.specialTimer -= dt;
-  }
-  if (player.dodgeTimer > 0) {
-    player.dodgeTimer -= dt;
-    player.invulnTimer = Math.max(player.invulnTimer, 0.08);
-  }
-
-  const moveDir = (input.left ? -1 : 0) + (input.right ? 1 : 0);
-
-  if (moveDir !== 0) {
-    player.facing = moveDir;
-  }
-
-  if (player.dodgeTimer > 0) {
-    player.vx = kit.dodgeSpeed * player.facing;
-  } else {
-    player.vx = moveDir * kit.speed;
-  }
-
-  if (input.jumpQueued) {
-    if (player.onGround) {
-      player.vy = -kit.jump;
-      player.onGround = false;
-    } else if (player.type === "stage" && player.canDoubleJump) {
-      player.vy = -kit.jump * 0.92;
-      player.canDoubleJump = false;
-      spawnEffect(player.x, player.y - 70, "Double", kit.accent);
-    }
-    input.jumpQueued = false;
-  }
-
-  if (input.attackQueued && player.attackTimer <= 0 && player.specialTimer <= 0) {
-    if (player.energy >= player.maxEnergy) {
-      spawnProjectile("player", "special");
+    if (config.air) {
+      g.fillEllipse(w / 2, h / 2, w, h * 0.74);
+      g.fillStyle(0xeff8ff, 0.75);
+      g.fillRect(6, h / 2 - 2, w - 12, 4);
     } else {
-      player.attackTimer = kit.attackTime;
-      player.combo = Math.min(player.combo + 1, 5);
-      attackEnemies();
-    }
-    input.attackQueued = false;
-  }
-
-  if (input.dodgeQueued && player.dodgeTimer <= 0) {
-    player.dodgeTimer = 0.18;
-    player.invulnTimer = 0.22;
-    input.dodgeQueued = false;
-  }
-
-  player.vy += world.gravity * dt;
-  player.x += player.vx * dt;
-  player.y += player.vy * dt;
-
-  if (player.y >= world.floorY) {
-    player.y = world.floorY;
-    player.vy = 0;
-    player.onGround = true;
-    player.canDoubleJump = player.type === "stage";
-  }
-
-  player.x = clamp(player.x, 44, world.width - 44);
-}
-
-function attackEnemies() {
-  const player = state.player;
-  const kit = characters[player.type];
-  let hits = 0;
-
-  state.enemies.forEach((enemy) => {
-    const dx = enemy.x - player.x;
-    const closeEnough = Math.abs(dx) <= kit.attackReach && Math.abs(enemy.y - player.y) < 110;
-    const inFront = Math.sign(dx || 1) === player.facing || Math.abs(dx) < 18;
-
-    if (closeEnough && inFront) {
-      const damage = kit.attackDamage + player.combo * (player.type === "stage" ? 1.5 : 1);
-      damageEnemy(enemy, damage, player.facing * (player.type === "court" ? 180 : 120));
-      hits += 1;
-    }
-  });
-
-  if (hits > 0) {
-    state.player.energy = Math.min(player.maxEnergy, player.energy + kit.energyGain * hits);
-    spawnEffect(player.x + player.facing * 44, player.y - 80, `x${hits}`, kit.accent);
-    state.cameraShake = Math.max(state.cameraShake, player.type === "court" ? 8 : 5);
-  } else {
-    player.combo = Math.max(player.combo - 1, 0);
-  }
-}
-
-function damageEnemy(enemy, damage, knockback) {
-  enemy.health -= damage;
-  enemy.hitTimer = 0.16;
-  enemy.vx += knockback;
-  spawnEffect(enemy.x, enemy.y - enemy.height, `${Math.round(damage)}`, enemy.color);
-
-  if (enemy.health <= 0) {
-    state.score += enemy.score;
-    spawnEffect(enemy.x, enemy.y - enemy.height, "KO", "#fff7ed");
-  }
-}
-
-function damagePlayer(amount) {
-  const player = state.player;
-  if (player.invulnTimer > 0) {
-    return;
-  }
-
-  player.health -= amount;
-  player.hitTimer = 0.22;
-  player.invulnTimer = 0.4;
-  player.combo = 0;
-  state.cameraShake = Math.max(state.cameraShake, 9);
-  spawnEffect(player.x, player.y - 86, `-${amount}`, "#fecaca");
-
-  if (player.health <= 0) {
-    player.health = 0;
-    state.screen = "gameover";
-    showOverlay(
-      "Run Down",
-      "Your MJ got overwhelmed.",
-      `Final score: ${state.score}. Try the other MJ if this stage matchup felt rough.`,
-      "Retry Run"
-    );
-  }
-}
-
-function updateEnemies(dt, time) {
-  const player = state.player;
-
-  state.enemies.forEach((enemy) => {
-    if (enemy.hitTimer > 0) {
-      enemy.hitTimer -= dt;
-    }
-    if (enemy.attackTimer > 0) {
-      enemy.attackTimer -= dt;
+      g.fillCircle(w / 2, 14, type === "boss" ? 18 : 12);
+      g.fillRoundedRect(w * 0.28, 24, w * 0.44, h * 0.45, 10);
+      g.fillRoundedRect(w * 0.08, 42, w * 0.24, 16, 8);
+      g.fillRoundedRect(w * 0.68, 42, w * 0.24, 16, 8);
+      g.fillRoundedRect(w * 0.3, h * 0.45, w * 0.14, h * 0.38, 8);
+      g.fillRoundedRect(w * 0.56, h * 0.45, w * 0.14, h * 0.38, 8);
     }
 
-    if (enemy.flying) {
-      enemy.y = enemy.baseY + Math.sin(time * 0.003 + enemy.x * 0.01) * 24;
+    g.generateTexture(`enemy-${type}`, Math.max(32, w), Math.max(32, h));
+    g.destroy();
+  }
+}
+
+class MenuScene extends Phaser.Scene {
+  constructor() {
+    super("menu");
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor("#09111a");
+    this.selected = "court";
+    this.drawBackdrop();
+    this.buildMenu();
+  }
+
+  drawBackdrop() {
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0e1d2c, 0x0e1d2c, 0x09111a, 0x09111a, 1);
+    bg.fillRect(0, 0, GAME_W, GAME_H);
+    bg.fillStyle(0x162534, 1);
+    for (let i = 0; i < 12; i += 1) {
+      bg.fillRect(30 + i * 110, FLOOR_Y - 120 - (i % 3) * 30, 70, 120 + (i % 3) * 30);
     }
-
-    const dx = player.x - enemy.x;
-    const distance = Math.abs(dx);
-    const direction = Math.sign(dx || -1);
-
-    if (enemy.type === "drone" || (enemy.boss && distance > 240)) {
-      enemy.vx = direction * enemy.speed * 0.5;
-      if (enemy.attackTimer <= 0) {
-        spawnProjectile(enemy, enemy.boss ? "boss-burst" : "flash");
-        enemy.attackTimer = enemy.cooldown;
-      }
-    } else if (distance > 68) {
-      enemy.vx = direction * enemy.speed;
-    } else {
-      enemy.vx *= 0.86;
-      if (enemy.attackTimer <= 0) {
-        damagePlayer(enemy.damage);
-        enemy.attackTimer = enemy.boss ? 0.72 : enemy.cooldown;
-      }
-    }
-
-    if (enemy.boss && enemy.health < enemy.maxHealth * 0.5) {
-      enemy.speed = 160;
-      enemy.cooldown = 0.82;
-      enemy.phase = 1;
-    }
-
-    enemy.x += enemy.vx * dt;
-    enemy.x = clamp(enemy.x, 28, world.width - 28);
-  });
-
-  state.enemies = state.enemies.filter((enemy) => enemy.health > 0);
-
-  if (state.screen === "playing" && state.enemies.length === 0) {
-    advanceEncounter();
-  }
-}
-
-function updateProjectiles(dt) {
-  state.projectiles.forEach((projectile) => {
-    projectile.life -= dt;
-    projectile.x += projectile.vx * dt;
-    projectile.y += projectile.vy * dt;
-    projectile.vy += projectile.owner === "player" && !projectile.pulse ? 420 * dt : 0;
-
-    if (projectile.owner === "player") {
-      state.enemies.forEach((enemy) => {
-        if (projectile.life <= 0) {
-          return;
-        }
-        const dx = enemy.x - projectile.x;
-        const dy = (enemy.y - enemy.height * 0.6) - projectile.y;
-        const radius = projectile.radius + enemy.width * 0.4;
-
-        if (dx * dx + dy * dy <= radius * radius) {
-          damageEnemy(enemy, projectile.damage, projectile.vx > 0 ? 220 : -220);
-          projectile.life = 0;
-          state.player.energy = Math.min(state.player.maxEnergy, state.player.energy + 6);
-        }
-      });
-    } else {
-      const player = state.player;
-      const dx = player.x - projectile.x;
-      const dy = (player.y - player.height * 0.55) - projectile.y;
-      const radius = projectile.radius + player.width * 0.4;
-      if (dx * dx + dy * dy <= radius * radius) {
-        damagePlayer(projectile.damage);
-        projectile.life = 0;
-      }
-    }
-  });
-
-  state.projectiles = state.projectiles.filter((projectile) => {
-    return projectile.life > 0 &&
-      projectile.x > -60 &&
-      projectile.x < world.width + 60 &&
-      projectile.y > -80 &&
-      projectile.y < world.height + 80;
-  });
-}
-
-function updateEffects(dt) {
-  state.effects.forEach((effect) => {
-    effect.life -= dt;
-    effect.y -= 34 * dt;
-  });
-  state.effects = state.effects.filter((effect) => effect.life > 0);
-}
-
-function updateHud() {
-  if (!state.player) {
-    return;
-  }
-  healthFillEl.style.width = `${(state.player.health / state.player.maxHealth) * 100}%`;
-  energyFillEl.style.width = `${(state.player.energy / state.player.maxEnergy) * 100}%`;
-  scoreValueEl.textContent = `Score ${state.score}`;
-}
-
-function updateSelectionUi() {
-  characterButtons.forEach((button) => {
-    button.classList.toggle("selected", button.dataset.character === state.selectedCharacter);
-  });
-}
-
-function update(dt, time) {
-  if (state.screen === "menu") {
-    updateEffects(dt);
-    updateHud();
-    return;
+    bg.fillStyle(0x0a121b, 1);
+    bg.fillRect(0, FLOOR_Y, GAME_W, GAME_H - FLOOR_Y);
   }
 
-  if (state.screen !== "playing") {
-    updateEffects(dt);
-    updateHud();
-    return;
+  buildMenu() {
+    fitText(this, "Phaser Browser Game", 80, 56, {
+      fontFamily: "Space Grotesk",
+      fontSize: "18px",
+      color: "#e6dbc9",
+      fontStyle: "700"
+    }, 0);
+
+    fitText(this, "Which MJ?", 80, 98, {
+      fontFamily: "Archivo Black",
+      fontSize: "68px",
+      color: "#f7efe5"
+    }, 0);
+
+    fitText(this, "Pick one fighter before the run starts.", 80, 146, {
+      fontFamily: "Space Grotesk",
+      fontSize: "24px",
+      color: "#c9beaf"
+    }, 0);
+
+    this.cards = {
+      court: this.createCharacterCard(330, 360, FIGHTERS.court, "court-portrait"),
+      stage: this.createCharacterCard(700, 360, FIGHTERS.stage, "stage-portrait")
+    };
+
+    this.selectionGlow = this.add.rectangle(330, 360, 250, 340)
+      .setStrokeStyle(3, 0xffb100, 1)
+      .setOrigin(0.5)
+      .setAlpha(0.95);
+
+    this.createStartButton();
+    this.createMenuFooter();
+    this.updateSelection();
   }
 
-  updatePlayer(dt);
-  updateEnemies(dt, time);
-  updateProjectiles(dt);
-  updateEffects(dt);
-  updateHud();
-
-  if (state.cameraShake > 0) {
-    state.cameraShake = Math.max(0, state.cameraShake - dt * 28);
-  }
-}
-
-function drawBackground(time) {
-  const stage = stages[state.stageIndex];
-  const gradient = ctx.createLinearGradient(0, 0, 0, world.height);
-
-  if (stage.name === "Neon Floor") {
-    gradient.addColorStop(0, "#081521");
-    gradient.addColorStop(0.6, "#15253c");
-    gradient.addColorStop(1, "#050a10");
-  } else if (stage.name === "Crown Court") {
-    gradient.addColorStop(0, "#201014");
-    gradient.addColorStop(0.55, "#2b1824");
-    gradient.addColorStop(1, "#120b11");
-  } else if (stage.name === "Final Spotlight") {
-    gradient.addColorStop(0, "#191308");
-    gradient.addColorStop(0.55, "#26190b");
-    gradient.addColorStop(1, "#09080c");
-  } else {
-    gradient.addColorStop(0, "#0d2032");
-    gradient.addColorStop(0.6, "#122638");
-    gradient.addColorStop(1, "#08111a");
-  }
-
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, world.width, world.height);
-
-  for (let i = 0; i < 5; i += 1) {
-    const pulse = 0.35 + Math.sin(time * 0.001 + i) * 0.08;
-    ctx.fillStyle = `rgba(255,255,255,${pulse})`;
-    ctx.beginPath();
-    ctx.arc(120 + i * 180, 100 + (i % 2) * 36, 2 + i * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  for (let i = 0; i < 9; i += 1) {
-    const height = 80 + (i % 3) * 42;
-    ctx.fillRect(i * 120, world.floorY - height - 40, 70, height);
-  }
-
-  const spotlightAlpha = stage.name === "Final Spotlight" ? 0.18 : 0.08;
-  ctx.fillStyle = `rgba(255,248,220,${spotlightAlpha})`;
-  ctx.beginPath();
-  ctx.moveTo(180, 0);
-  ctx.lineTo(320, world.floorY);
-  ctx.lineTo(40, world.floorY);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(760, 0);
-  ctx.lineTo(940, world.floorY);
-  ctx.lineTo(620, world.floorY);
-  ctx.closePath();
-  ctx.fill();
-
-  const floorGradient = ctx.createLinearGradient(0, world.floorY - 10, 0, world.height);
-  floorGradient.addColorStop(0, "rgba(255,255,255,0.06)");
-  floorGradient.addColorStop(1, "rgba(0,0,0,0.38)");
-  ctx.fillStyle = floorGradient;
-  ctx.fillRect(0, world.floorY, world.width, world.height - world.floorY);
-
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, world.floorY);
-  ctx.lineTo(world.width, world.floorY);
-  ctx.stroke();
-}
-
-function drawPlayer() {
-  const player = state.player;
-  if (!player) {
-    return;
-  }
-
-  const kit = characters[player.type];
-  const flash = player.hitTimer > 0 ? "#ffffff" : kit.color;
-  const x = player.x;
-  const y = player.y;
-
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(player.facing, 1);
-  ctx.globalAlpha = player.invulnTimer > 0 && Math.floor(player.invulnTimer * 30) % 2 === 0 ? 0.55 : 1;
-
-  ctx.fillStyle = kit.skin;
-  ctx.beginPath();
-  ctx.arc(0, -78, 15, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (player.type === "stage") {
-    ctx.fillStyle = kit.hair;
-    ctx.beginPath();
-    ctx.ellipse(0, -86, 18, 16, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(-15, -76, 8, 34);
-    ctx.fillRect(7, -76, 8, 34);
-  }
-
-  ctx.fillStyle = flash;
-  ctx.fillRect(-12, -66, 24, 48);
-  ctx.fillStyle = kit.outfit;
-  ctx.fillRect(-20, -46, 40, 18);
-
-  if (player.type === "court") {
-    ctx.fillStyle = kit.color;
-    ctx.fillRect(-31, -22, 18, 42);
-    ctx.fillRect(13, -20, 16, 42);
-    ctx.fillStyle = "#f2f2f2";
-    ctx.fillRect(-11, -22, 14, 52);
-    ctx.fillRect(3, -22, 14, 52);
-    ctx.beginPath();
-    ctx.arc(28, -42, 10, 0, Math.PI * 2);
-    ctx.fillStyle = kit.accent;
-    ctx.fill();
-  } else {
-    ctx.fillStyle = kit.color;
-    ctx.fillRect(-30, -20, 16, 44);
-    ctx.fillRect(14, -34, 12, 48);
-    ctx.fillStyle = "#e5e7eb";
-    ctx.fillRect(-12, -22, 12, 56);
-    ctx.fillRect(4, -34, 12, 64);
-    ctx.strokeStyle = kit.accent;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(20, -30);
-    ctx.lineTo(64, -48);
-    ctx.stroke();
-  }
-
-  if (player.attackTimer > 0) {
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillRect(28, -54, 34, 12);
-  }
-
-  if (player.specialTimer > 0) {
-    ctx.strokeStyle = kit.accent;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, -38, 34 + player.specialTimer * 24, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
-function drawEnemy(enemy) {
-  const flash = enemy.hitTimer > 0 ? "#fff1f2" : enemy.color;
-
-  ctx.save();
-  ctx.translate(enemy.x, enemy.y);
-  ctx.fillStyle = flash;
-
-  if (enemy.flying) {
-    ctx.beginPath();
-    ctx.ellipse(0, -18, enemy.width * 0.48, enemy.height * 0.42, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(-18, -16, 36, 6);
-  } else if (enemy.boss) {
-    ctx.beginPath();
-    ctx.arc(0, -100, 18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(-18, -88, 36, 54);
-    ctx.fillRect(-36, -68, 22, 18);
-    ctx.fillRect(14, -72, 26, 18);
-    ctx.fillRect(-18, -34, 16, 62);
-    ctx.fillRect(4, -34, 16, 62);
-    ctx.strokeStyle = "#fff7ed";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(24, -62);
-    ctx.lineTo(68, -76);
-    ctx.stroke();
-  } else {
-    ctx.beginPath();
-    ctx.arc(0, -enemy.height + 14, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(-enemy.width * 0.22, -enemy.height + 24, enemy.width * 0.44, enemy.height * 0.52);
-    ctx.fillRect(-enemy.width * 0.42, -enemy.height + 42, enemy.width * 0.3, 14);
-    ctx.fillRect(enemy.width * 0.1, -enemy.height + 42, enemy.width * 0.3, 14);
-    ctx.fillRect(-enemy.width * 0.18, -enemy.height * 0.34, enemy.width * 0.16, enemy.height * 0.34);
-    ctx.fillRect(enemy.width * 0.02, -enemy.height * 0.34, enemy.width * 0.16, enemy.height * 0.34);
-  }
-
-  const healthRatio = Math.max(enemy.health, 0) / enemy.maxHealth;
-  ctx.fillStyle = "rgba(255,255,255,0.1)";
-  ctx.fillRect(-22, -enemy.height - 22, 44, 5);
-  ctx.fillStyle = "#fff7ed";
-  ctx.fillRect(-22, -enemy.height - 22, 44 * healthRatio, 5);
-  ctx.restore();
-}
-
-function drawProjectiles() {
-  state.projectiles.forEach((projectile) => {
-    ctx.save();
-    ctx.fillStyle = projectile.color;
-    ctx.shadowBlur = projectile.pulse ? 24 : 14;
-    ctx.shadowColor = projectile.color;
-    ctx.beginPath();
-    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
-}
-
-function drawEffects() {
-  state.effects.forEach((effect) => {
-    ctx.save();
-    ctx.globalAlpha = Math.max(effect.life, 0);
-    ctx.fillStyle = effect.color;
-    ctx.font = "700 18px Space Grotesk";
-    ctx.fillText(effect.text, effect.x, effect.y);
-    ctx.restore();
-  });
-}
-
-function drawCharacterHint() {
-  const activeType = state.player ? state.player.type : state.selectedCharacter;
-  const kit = characters[activeType];
-  ctx.save();
-  ctx.fillStyle = "rgba(255,255,255,0.88)";
-  ctx.font = "700 18px Space Grotesk";
-    ctx.fillText(`${kit.name}: ${kit.description}`, 26, 34);
-  ctx.restore();
-}
-
-function render(time) {
-  ctx.clearRect(0, 0, world.width, world.height);
-  ctx.save();
-
-  if (state.cameraShake > 0) {
-    const shakeX = (Math.random() - 0.5) * state.cameraShake;
-    const shakeY = (Math.random() - 0.5) * state.cameraShake;
-    ctx.translate(shakeX, shakeY);
-  }
-
-  drawBackground(time);
-  if (state.player) {
-    drawPlayer();
-  }
-  state.enemies.forEach(drawEnemy);
-  drawProjectiles();
-  drawEffects();
-  drawCharacterHint();
-  ctx.restore();
-}
-
-function frame(time) {
-  const dt = Math.min((time - state.lastTime) / 1000 || 0, 0.033);
-  state.lastTime = time;
-  update(dt, time);
-  render(time);
-  requestAnimationFrame(frame);
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function handleKeyDown(event) {
-  const key = event.key.toLowerCase();
-
-  if (key === "a") {
-    input.left = true;
-  } else if (key === "d") {
-    input.right = true;
-  } else if (key === "w") {
-    input.jumpQueued = true;
-  } else if (key === " ") {
-    input.jumpQueued = true;
-  } else if (key === "j") {
-    input.attackQueued = true;
-  } else if (key === "l") {
-    input.dodgeQueued = true;
-  } else if (key === "enter" && state.screen !== "playing") {
-    continueFromOverlay();
-  }
-}
-
-function handleKeyUp(event) {
-  const key = event.key.toLowerCase();
-  if (key === "a") {
-    input.left = false;
-  } else if (key === "d") {
-    input.right = false;
-  }
-}
-
-function releaseMoveInputs() {
-  input.left = false;
-  input.right = false;
-}
-
-function handleDirectionalTap(direction) {
-  const now = performance.now();
-  if (direction === "left") {
-    input.left = true;
-    input.right = false;
-    if (now - tapState.leftLastTap < 260) {
-      input.dodgeQueued = true;
-    }
-    tapState.leftLastTap = now;
-  } else {
-    input.right = true;
-    input.left = false;
-    if (now - tapState.rightLastTap < 260) {
-      input.dodgeQueued = true;
-    }
-    tapState.rightLastTap = now;
-  }
-}
-
-function bindTouchButton(button) {
-  const control = button.dataset.touch;
-  const start = (event) => {
-    event.preventDefault();
-    if (control === "left" || control === "right") {
-      handleDirectionalTap(control);
-    } else if (control === "jump") {
-      input.jumpQueued = true;
-    } else if (control === "action") {
-      input.attackQueued = true;
-    }
-  };
-
-  const end = (event) => {
-    event.preventDefault();
-    if (control === "left" || control === "right") {
-      releaseMoveInputs();
-    }
-  };
-
-  button.addEventListener("touchstart", start, { passive: false });
-  button.addEventListener("touchend", end, { passive: false });
-  button.addEventListener("touchcancel", end, { passive: false });
-  button.addEventListener("mousedown", start);
-  button.addEventListener("mouseup", end);
-  button.addEventListener("mouseleave", end);
-}
-
-function initGame() {
-  canvas = document.getElementById("gameCanvas");
-  stageNameEl = document.getElementById("stageName");
-  briefTitleEl = document.getElementById("briefTitle");
-  briefTextEl = document.getElementById("briefText");
-  stageNotesEl = document.getElementById("stageNotes");
-  healthFillEl = document.getElementById("healthFill");
-  energyFillEl = document.getElementById("energyFill");
-  scoreValueEl = document.getElementById("scoreValue");
-  waveValueEl = document.getElementById("waveValue");
-  overlayEl = document.getElementById("overlay");
-  overlayEyebrowEl = document.getElementById("overlayEyebrow");
-  overlayTitleEl = document.getElementById("overlayTitle");
-  overlayTextEl = document.getElementById("overlayText");
-  overlayButtonEl = document.getElementById("overlayButton");
-  startButtonEl = document.getElementById("startButton");
-  characterButtons = [...document.querySelectorAll("[data-character]")];
-  touchButtons = [...document.querySelectorAll(".touch-btn")];
-
-  if (
-    !canvas ||
-    !stageNameEl ||
-    !briefTitleEl ||
-    !briefTextEl ||
-    !stageNotesEl ||
-    !healthFillEl ||
-    !energyFillEl ||
-    !scoreValueEl ||
-    !waveValueEl ||
-    !overlayEl ||
-    !overlayEyebrowEl ||
-    !overlayTitleEl ||
-    !overlayTextEl ||
-    !overlayButtonEl ||
-    !startButtonEl
-  ) {
-    console.error("Which MJ failed to initialize because required DOM nodes were not found.");
-    return;
-  }
-
-  ctx = canvas.getContext("2d");
-  if (!ctx) {
-    console.error("Which MJ failed to initialize because the canvas context could not be created.");
-    return;
-  }
-
-  world.width = canvas.width;
-  world.height = canvas.height;
-
-  characterButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedCharacter = button.dataset.character;
-      updateSelectionUi();
-      if (state.screen === "menu") {
-        showMenu();
-      }
-      drawCharacterHint();
+  createCharacterCard(x, y, fighter, texture) {
+    const container = this.add.container(x, y);
+    const card = this.add.rectangle(0, 0, 250, 340, 0x0d1824, 0.92)
+      .setStrokeStyle(2, 0x2a3947, 1)
+      .setInteractive({ useHandCursor: true });
+    const portrait = this.add.image(0, -48, texture).setDisplaySize(220, 260);
+    const name = fitText(this, fighter.name, 0, 116, {
+      fontFamily: "Archivo Black",
+      fontSize: "28px",
+      color: "#f7efe5"
     });
-  });
+    const sub = fitText(this, fighter.subtitle, 0, 152, {
+      fontFamily: "Space Grotesk",
+      fontSize: "18px",
+      color: "#d1c4b4"
+    });
 
-  touchButtons.forEach(bindTouchButton);
-  startButtonEl.addEventListener("click", startRun);
-  overlayButtonEl.addEventListener("click", continueFromOverlay);
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
+    container.add([card, portrait, name, sub]);
+    card.on("pointerdown", () => {
+      this.selected = fighter.id;
+      this.updateSelection();
+    });
+    return container;
+  }
 
-  updateSelectionUi();
-  showMenu();
-  requestAnimationFrame(frame);
+  createStartButton() {
+    const button = this.add.container(GAME_W / 2, 640);
+    const bg = this.add.rectangle(0, 0, 280, 68, 0xff7a18, 1)
+      .setStrokeStyle(2, 0xffd3b0, 0.6)
+      .setInteractive({ useHandCursor: true });
+    const label = fitText(this, "Start Fight", 0, 0, {
+      fontFamily: "Archivo Black",
+      fontSize: "28px",
+      color: "#fff7ef"
+    });
+    button.add([bg, label]);
+    bg.on("pointerdown", () => {
+      this.scene.start("fight", {
+        fighter: this.selected,
+        levelIndex: 0,
+        score: 0
+      });
+    });
+  }
+
+  createMenuFooter() {
+    fitText(this, "Court MJ is the heavier basketball bruiser. Stage MJ is the faster long-haired pressure fighter.", GAME_W / 2, 682, {
+      fontFamily: "Space Grotesk",
+      fontSize: "18px",
+      color: "#c9beaf",
+      align: "center"
+    });
+  }
+
+  updateSelection() {
+    const x = this.selected === "court" ? 330 : 700;
+    this.selectionGlow.setPosition(x, 360);
+    const courtActive = this.selected === "court";
+    this.cards.court.first.setStrokeStyle(2, courtActive ? 0xffb100 : 0x2a3947, 1);
+    this.cards.stage.first.setStrokeStyle(2, courtActive ? 0x2a3947 : 0x60a5fa, 1);
+  }
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initGame, { once: true });
-} else {
-  initGame();
+class FightScene extends Phaser.Scene {
+  constructor() {
+    super("fight");
+  }
+
+  create(data) {
+    this.fighterKey = data.fighter || "court";
+    this.levelIndex = data.levelIndex || 0;
+    this.score = data.score || 0;
+    this.level = LEVELS[this.levelIndex];
+    this.waveIndex = 0;
+    this.attackCooldown = 0;
+    this.specialCooldown = 0;
+    this.touchState = { left: false, right: false };
+
+    this.buildArena();
+    this.createPlayer();
+    this.createUi();
+    this.createControls();
+    this.spawnEncounter();
+  }
+
+  buildArena() {
+    const bg = this.add.graphics();
+    const colors = [
+      [0x0f2032, 0x09111a],
+      [0x081722, 0x0b1119],
+      [0x1d0e16, 0x100912],
+      [0x1a1308, 0x0c0a08]
+    ][this.levelIndex] || [0x0f2032, 0x09111a];
+
+    bg.fillGradientStyle(colors[0], colors[0], colors[1], colors[1], 1);
+    bg.fillRect(0, 0, GAME_W, GAME_H);
+    bg.fillStyle(0xffffff, 0.03);
+    for (let i = 0; i < 12; i += 1) {
+      bg.fillRect(i * 110, FLOOR_Y - 100 - (i % 4) * 28, 70, 100 + (i % 4) * 28);
+    }
+    bg.fillStyle(0x0a121b, 1);
+    bg.fillRect(0, FLOOR_Y, GAME_W, GAME_H - FLOOR_Y);
+    bg.lineStyle(2, 0xffffff, 0.08);
+    bg.lineBetween(0, FLOOR_Y, GAME_W, FLOOR_Y);
+  }
+
+  createPlayer() {
+    const config = FIGHTERS[this.fighterKey];
+    const texture = this.fighterKey === "court" ? "court-portrait" : "stage-portrait";
+
+    this.player = this.physics.add.sprite(170, FLOOR_Y - 110, texture)
+      .setDisplaySize(150, 178)
+      .setDepth(3);
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(70, 150);
+    this.player.body.setOffset(74, 88);
+    this.player.setDataEnabled();
+    this.player.data.set({
+      fighter: config,
+      health: config.health,
+      maxHealth: config.health,
+      energy: 0,
+      facing: 1,
+      onGround: false
+    });
+    this.player.body.setGravityY(1700);
+  }
+
+  createUi() {
+    this.stageLabel = fitText(this, this.level.name, 34, 28, {
+      fontFamily: "Archivo Black",
+      fontSize: "34px",
+      color: "#f7efe5"
+    }, 0);
+
+    this.waveLabel = fitText(this, this.level.boss ? "Boss" : `Wave 1 / ${this.level.waves.length}`, 34, 64, {
+      fontFamily: "Space Grotesk",
+      fontSize: "20px",
+      color: "#d1c4b4"
+    }, 0);
+
+    this.scoreLabel = fitText(this, `Score ${this.score}`, GAME_W - 34, 32, {
+      fontFamily: "Space Grotesk",
+      fontSize: "24px",
+      color: "#f7efe5"
+    }, 1);
+
+    this.healthBarBg = this.add.rectangle(170, 104, 260, 18, 0xffffff, 0.1).setOrigin(0, 0.5);
+    this.healthBar = this.add.rectangle(170, 104, 260, 18, 0xfb7185, 1).setOrigin(0, 0.5);
+    fitText(this, "Health", 34, 104, {
+      fontFamily: "Space Grotesk",
+      fontSize: "18px",
+      color: "#e5d7c4"
+    }, 0);
+
+    this.energyBarBg = this.add.rectangle(170, 134, 260, 14, 0xffffff, 0.1).setOrigin(0, 0.5);
+    this.energyBar = this.add.rectangle(170, 134, 0, 14, 0x19c8bb, 1).setOrigin(0, 0.5);
+    fitText(this, "Energy", 34, 134, {
+      fontFamily: "Space Grotesk",
+      fontSize: "18px",
+      color: "#e5d7c4"
+    }, 0);
+  }
+
+  createControls() {
+    this.keys = this.input.keyboard.addKeys({
+      left: "A",
+      right: "D",
+      jump: "W",
+      attack: "J",
+      special: "K"
+    });
+
+    this.makeTouchButton(88, 644, 88, "Left", () => {
+      this.touchState.left = true;
+      this.touchState.right = false;
+    }, () => { this.touchState.left = false; });
+    this.makeTouchButton(196, 644, 88, "Right", () => {
+      this.touchState.right = true;
+      this.touchState.left = false;
+    }, () => { this.touchState.right = false; });
+    this.makeTouchButton(GAME_W - 196, 644, 88, "Jump", () => this.tryJump());
+    this.makeTouchButton(GAME_W - 88, 644, 88, "Action", () => this.tryAttack());
+    this.input.on("pointerup", () => {
+      this.touchState.left = false;
+      this.touchState.right = false;
+    });
+  }
+
+  makeTouchButton(x, y, size, label, onStart, onEnd = () => {}) {
+    const circle = this.add.circle(x, y, size / 2, 0x08131d, 0.72)
+      .setStrokeStyle(2, 0xffffff, 0.12)
+      .setScrollFactor(0)
+      .setInteractive();
+    fitText(this, label, x, y, {
+      fontFamily: "Archivo Black",
+      fontSize: "22px",
+      color: "#fff6ec"
+    });
+    circle.on("pointerdown", onStart);
+    circle.on("pointerup", onEnd);
+    circle.on("pointerout", onEnd);
+  }
+
+  spawnEncounter() {
+    this.enemies = this.physics.add.group();
+
+    if (this.level.boss) {
+      this.spawnEnemy(this.level.boss, 1010);
+      return;
+    }
+
+    const wave = this.level.waves[this.waveIndex];
+    wave.forEach((type, index) => {
+      this.spawnEnemy(type, 890 + index * 110);
+    });
+  }
+
+  spawnEnemy(type, x) {
+    const config = ENEMIES[type];
+    const sprite = this.enemies.create(x, config.air ? FLOOR_Y - 220 : FLOOR_Y - 60, `enemy-${type}`)
+      .setDepth(3);
+    sprite.setDisplaySize(config.size[0], config.size[1]);
+    sprite.body.setAllowGravity(!config.air);
+    if (!config.air) {
+      sprite.body.setGravityY(1700);
+    }
+    sprite.body.setCollideWorldBounds(true);
+    sprite.setDataEnabled();
+    sprite.data.set({
+      type,
+      health: config.health,
+      maxHealth: config.health,
+      damage: config.damage,
+      speed: config.speed,
+      score: config.score,
+      attackTimer: 0,
+      air: Boolean(config.air),
+      boss: Boolean(config.boss)
+    });
+  }
+
+  update(_time, deltaMs) {
+    const dt = deltaMs / 1000;
+    this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+    this.specialCooldown = Math.max(0, this.specialCooldown - dt);
+
+    this.updateMovement();
+    this.updateEnemies(dt);
+    this.updateUi();
+    this.checkProgress();
+  }
+
+  updateMovement() {
+    const fighter = this.player.data.get("fighter");
+    const movingLeft = this.keys.left.isDown || this.touchState.left;
+    const movingRight = this.keys.right.isDown || this.touchState.right;
+
+    if (movingLeft) {
+      this.player.setVelocityX(-fighter.speed);
+      this.player.setFlipX(true);
+      this.player.data.set("facing", -1);
+    } else if (movingRight) {
+      this.player.setVelocityX(fighter.speed);
+      this.player.setFlipX(false);
+      this.player.data.set("facing", 1);
+    } else {
+      this.player.setVelocityX(0);
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.jump)) {
+      this.tryJump();
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
+      this.tryAttack();
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.special)) {
+      this.trySpecial();
+    }
+  }
+
+  tryJump() {
+    const fighter = this.player.data.get("fighter");
+    if (this.player.body.blocked.down) {
+      this.player.setVelocityY(-fighter.jump);
+    }
+  }
+
+  tryAttack() {
+    const fighter = this.player.data.get("fighter");
+    const energy = this.player.data.get("energy");
+    if (energy >= 100) {
+      this.trySpecial();
+      return;
+    }
+    if (this.attackCooldown > 0) {
+      return;
+    }
+
+    this.attackCooldown = 0.22;
+    const facing = this.player.data.get("facing");
+    const hitX = this.player.x + facing * fighter.reach;
+    const slash = this.add.rectangle(hitX, this.player.y - 46, 72, 26, 0xffffff, 0.55).setDepth(4);
+    this.tweens.add({ targets: slash, alpha: 0, duration: 120, onComplete: () => slash.destroy() });
+
+    this.enemies.getChildren().forEach((enemy) => {
+      if (!enemy.active) {
+        return;
+      }
+      const distance = Phaser.Math.Distance.Between(hitX, this.player.y - 40, enemy.x, enemy.y - 20);
+      if (distance < 86) {
+        this.damageEnemy(enemy, fighter.attack, facing * 210);
+      }
+    });
+  }
+
+  trySpecial() {
+    const fighter = this.player.data.get("fighter");
+    const energy = this.player.data.get("energy");
+    if (energy < 100 || this.specialCooldown > 0) {
+      return;
+    }
+    this.specialCooldown = 0.7;
+    this.player.data.set("energy", 0);
+
+    const facing = this.player.data.get("facing");
+    const blast = this.add.circle(this.player.x + facing * 60, this.player.y - 72, 26, fighter.accent, 0.95).setDepth(4);
+    this.tweens.add({
+      targets: blast,
+      x: blast.x + facing * 220,
+      alpha: 0,
+      scaleX: 2.2,
+      scaleY: 2.2,
+      duration: 220,
+      onComplete: () => blast.destroy()
+    });
+
+    this.enemies.getChildren().forEach((enemy) => {
+      if (!enemy.active) {
+        return;
+      }
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+      if (distance < 240) {
+        this.damageEnemy(enemy, fighter.special, facing * 320);
+      }
+    });
+  }
+
+  damageEnemy(enemy, amount, knockback) {
+    enemy.data.values.health -= amount;
+    enemy.setTintFill(0xffffff);
+    this.time.delayedCall(90, () => enemy.clearTint());
+    enemy.body.velocity.x += knockback;
+    this.player.data.set("energy", Math.min(100, this.player.data.get("energy") + 14));
+    this.spawnFloat(`${amount}`, enemy.x, enemy.y - 70, "#fff2e8");
+
+    if (enemy.data.values.health <= 0) {
+      this.score += enemy.data.values.score;
+      this.spawnFloat("KO", enemy.x, enemy.y - 110, "#fef3c7");
+      enemy.destroy();
+    }
+  }
+
+  damagePlayer(amount) {
+    const current = Math.max(0, this.player.data.get("health") - amount);
+    this.player.data.set("health", current);
+    this.spawnFloat(`-${amount}`, this.player.x, this.player.y - 120, "#fecaca");
+    this.player.setTintFill(0xffffff);
+    this.time.delayedCall(90, () => this.player.clearTint());
+
+    if (current <= 0) {
+      this.scene.start("result", {
+        win: false,
+        fighter: this.fighterKey,
+        score: this.score
+      });
+    }
+  }
+
+  updateEnemies(dt) {
+    this.enemies.getChildren().forEach((enemy) => {
+      const config = enemy.data.values;
+      config.attackTimer = Math.max(0, config.attackTimer - dt);
+
+      if (config.air) {
+        enemy.y = FLOOR_Y - 220 + Math.sin(this.time.now * 0.004 + enemy.x * 0.01) * 26;
+      }
+
+      const dx = this.player.x - enemy.x;
+      const dist = Math.abs(dx);
+      const dir = Math.sign(dx || -1);
+
+      if (config.air && dist > 140) {
+        enemy.setVelocityX(dir * config.speed);
+      } else if (dist > 82) {
+        enemy.setVelocityX(dir * config.speed);
+      } else {
+        enemy.setVelocityX(0);
+        if (config.attackTimer <= 0) {
+          this.damagePlayer(config.damage);
+          config.attackTimer = config.boss ? 0.7 : 1;
+        }
+      }
+    });
+  }
+
+  checkProgress() {
+    if (this.enemies.countActive(true) > 0) {
+      return;
+    }
+
+    if (this.level.boss) {
+      this.scene.start("result", {
+        win: true,
+        fighter: this.fighterKey,
+        score: this.score
+      });
+      return;
+    }
+
+    if (this.waveIndex < this.level.waves.length - 1) {
+      this.waveIndex += 1;
+      this.waveLabel.setText(`Wave ${this.waveIndex + 1} / ${this.level.waves.length}`);
+      this.spawnEncounter();
+      return;
+    }
+
+    this.scene.start("fight", {
+      fighter: this.fighterKey,
+      levelIndex: this.levelIndex + 1,
+      score: this.score
+    });
+  }
+
+  spawnFloat(text, x, y, color) {
+    const label = fitText(this, text, x, y, {
+      fontFamily: "Archivo Black",
+      fontSize: "24px",
+      color
+    });
+    this.tweens.add({
+      targets: label,
+      y: y - 34,
+      alpha: 0,
+      duration: 480,
+      onComplete: () => label.destroy()
+    });
+  }
+
+  updateUi() {
+    const healthRatio = this.player.data.get("health") / this.player.data.get("maxHealth");
+    const energyRatio = this.player.data.get("energy") / 100;
+    this.healthBar.width = 260 * Phaser.Math.Clamp(healthRatio, 0, 1);
+    this.energyBar.width = 260 * Phaser.Math.Clamp(energyRatio, 0, 1);
+    this.scoreLabel.setText(`Score ${this.score}`);
+  }
 }
+
+class ResultScene extends Phaser.Scene {
+  constructor() {
+    super("result");
+  }
+
+  create(data) {
+    this.cameras.main.setBackgroundColor("#09111a");
+    const fighter = FIGHTERS[data.fighter || "court"];
+    fitText(this, data.win ? "Run Cleared" : "Run Failed", GAME_W / 2, 170, {
+      fontFamily: "Archivo Black",
+      fontSize: "76px",
+      color: "#f7efe5"
+    });
+    fitText(this, `${fighter.name} Score: ${data.score || 0}`, GAME_W / 2, 254, {
+      fontFamily: "Space Grotesk",
+      fontSize: "28px",
+      color: "#d4c8ba"
+    });
+
+    this.add.image(GAME_W / 2, 430, fighter.id === "court" ? "court-portrait" : "stage-portrait")
+      .setDisplaySize(250, 296);
+
+    const button = this.add.container(GAME_W / 2, 628);
+    const bg = this.add.rectangle(0, 0, 320, 72, fighter.color, 1)
+      .setStrokeStyle(2, 0xffffff, 0.18)
+      .setInteractive({ useHandCursor: true });
+    const label = fitText(this, "Back To Character Select", 0, 0, {
+      fontFamily: "Archivo Black",
+      fontSize: "24px",
+      color: "#fff8ef"
+    });
+    button.add([bg, label]);
+    bg.on("pointerdown", () => this.scene.start("menu"));
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  parent: "game-root",
+  width: GAME_W,
+  height: GAME_H,
+  backgroundColor: "#09111a",
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
+  },
+  scene: [BootScene, MenuScene, FightScene, ResultScene]
+};
+
+new Phaser.Game(config);
