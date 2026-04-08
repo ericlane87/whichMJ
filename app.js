@@ -318,6 +318,13 @@ class FightScene extends Phaser.Scene {
       onGround: false
     });
     this.player.body.setGravityY(1700);
+
+    if (this.fighterKey === "court") {
+      this.dribbleBall = this.add.circle(this.player.x + 42, this.player.y + 18, 16, 0xd97706, 1).setDepth(4);
+      this.dribbleBall.setStrokeStyle(3, 0x7c2d12, 1);
+      this.dribbleCross1 = this.add.line(0, 0, -16, 0, 16, 0, 0x7c2d12, 1).setLineWidth(3).setDepth(5);
+      this.dribbleCross2 = this.add.line(0, 0, 0, -16, 0, 16, 0x7c2d12, 1).setLineWidth(3).setDepth(5);
+    }
   }
 
   createUi() {
@@ -440,6 +447,7 @@ class FightScene extends Phaser.Scene {
     this.specialCooldown = Math.max(0, this.specialCooldown - dt);
 
     this.updateMovement();
+    this.updateDribble(_time);
     this.updateEnemies(dt);
     this.updateUi();
     this.checkProgress();
@@ -450,16 +458,28 @@ class FightScene extends Phaser.Scene {
     const movingLeft = this.keys.left.isDown || this.touchState.left;
     const movingRight = this.keys.right.isDown || this.touchState.right;
 
-    if (movingLeft) {
-      this.player.setVelocityX(-fighter.speed);
-      this.player.setFlipX(true);
-      this.player.data.set("facing", -1);
-    } else if (movingRight) {
-      this.player.setVelocityX(fighter.speed);
+    if (this.fighterKey === "court") {
+      if (movingLeft) {
+        this.player.setVelocityX(0);
+      } else if (movingRight) {
+        this.player.setVelocityX(fighter.speed);
+      } else {
+        this.player.setVelocityX(fighter.speed * 0.55);
+      }
       this.player.setFlipX(false);
       this.player.data.set("facing", 1);
     } else {
-      this.player.setVelocityX(0);
+      if (movingLeft) {
+        this.player.setVelocityX(-fighter.speed);
+        this.player.setFlipX(true);
+        this.player.data.set("facing", -1);
+      } else if (movingRight) {
+        this.player.setVelocityX(fighter.speed);
+        this.player.setFlipX(false);
+        this.player.data.set("facing", 1);
+      } else {
+        this.player.setVelocityX(0);
+      }
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.jump)) {
@@ -471,6 +491,28 @@ class FightScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.special)) {
       this.trySpecial();
     }
+  }
+
+  updateDribble(time) {
+    if (!this.dribbleBall) {
+      return;
+    }
+
+    const speed = Math.abs(this.player.body.velocity.x);
+    const moving = speed > 30;
+    const bounce = moving ? Math.abs(Math.sin(time * 0.018)) : 0.15;
+    const ballX = this.player.x + 44;
+    const ballY = this.player.y + 12 + bounce * 40;
+
+    this.dribbleBall.setPosition(ballX, ballY);
+    this.dribbleCross1.setPosition(ballX, ballY);
+    this.dribbleCross2.setPosition(ballX, ballY);
+    this.dribbleBall.setVisible(true);
+    this.dribbleCross1.setVisible(true);
+    this.dribbleCross2.setVisible(true);
+    this.dribbleBall.setAlpha(moving ? 1 : 0.8);
+    this.dribbleCross1.setAlpha(moving ? 1 : 0.8);
+    this.dribbleCross2.setAlpha(moving ? 1 : 0.8);
   }
 
   tryJump() {
