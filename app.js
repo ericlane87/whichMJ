@@ -83,10 +83,10 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.svg("court-portrait", "assets/court-mj.svg");
-    this.load.svg("stage-portrait", "assets/stage-mj.svg");
-    this.load.svg("court-fighter", "assets/court-fighter.svg");
-    this.load.svg("stage-fighter", "assets/stage-fighter.svg");
+    this.load.svg("court-portrait", "assets/court-mj.svg?v=20260408-2");
+    this.load.svg("stage-portrait", "assets/stage-mj.svg?v=20260408-2");
+    this.load.svg("court-fighter", "assets/court-fighter.svg?v=20260408-2");
+    this.load.svg("stage-fighter", "assets/stage-fighter.svg?v=20260408-2");
   }
 
   create() {
