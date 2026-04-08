@@ -85,6 +85,8 @@ class BootScene extends Phaser.Scene {
   preload() {
     this.load.svg("court-portrait", "assets/court-mj.svg");
     this.load.svg("stage-portrait", "assets/stage-mj.svg");
+    this.load.svg("court-fighter", "assets/court-fighter.svg");
+    this.load.svg("stage-fighter", "assets/stage-fighter.svg");
   }
 
   create() {
@@ -300,14 +302,14 @@ class FightScene extends Phaser.Scene {
 
   createPlayer() {
     const config = FIGHTERS[this.fighterKey];
-    const texture = this.fighterKey === "court" ? "court-portrait" : "stage-portrait";
+    const texture = this.fighterKey === "court" ? "court-fighter" : "stage-fighter";
 
     this.player = this.physics.add.sprite(170, FLOOR_Y - 110, texture)
-      .setDisplaySize(150, 178)
+      .setDisplaySize(132, 162)
       .setDepth(3);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(70, 150);
-    this.player.body.setOffset(74, 88);
+    this.player.body.setSize(72, 150);
+    this.player.body.setOffset(54, 36);
     this.player.setDataEnabled();
     this.player.data.set({
       fighter: config,
@@ -320,7 +322,7 @@ class FightScene extends Phaser.Scene {
     this.player.body.setGravityY(1700);
 
     if (this.fighterKey === "court") {
-      this.dribbleBall = this.add.circle(this.player.x + 42, this.player.y + 18, 16, 0xd97706, 1).setDepth(4);
+      this.dribbleBall = this.add.circle(this.player.x + 44, this.player.y + 6, 15, 0xd97706, 1).setDepth(4);
       this.dribbleBall.setStrokeStyle(3, 0x7c2d12, 1);
       this.dribbleCross1 = this.add.line(0, 0, -16, 0, 16, 0, 0x7c2d12, 1).setLineWidth(3).setDepth(5);
       this.dribbleCross2 = this.add.line(0, 0, 0, -16, 0, 16, 0x7c2d12, 1).setLineWidth(3).setDepth(5);
@@ -501,8 +503,8 @@ class FightScene extends Phaser.Scene {
     const speed = Math.abs(this.player.body.velocity.x);
     const moving = speed > 30;
     const bounce = moving ? Math.abs(Math.sin(time * 0.018)) : 0.15;
-    const ballX = this.player.x + 44;
-    const ballY = this.player.y + 12 + bounce * 40;
+    const ballX = this.player.x + 46;
+    const ballY = this.player.y - 4 + bounce * 38;
 
     this.dribbleBall.setPosition(ballX, ballY);
     this.dribbleCross1.setPosition(ballX, ballY);
@@ -536,8 +538,9 @@ class FightScene extends Phaser.Scene {
     this.attackCooldown = 0.22;
     const facing = this.player.data.get("facing");
     const hitX = this.player.x + facing * fighter.reach;
-    const slash = this.add.rectangle(hitX, this.player.y - 46, 72, 26, 0xffffff, 0.55).setDepth(4);
-    this.tweens.add({ targets: slash, alpha: 0, duration: 120, onComplete: () => slash.destroy() });
+    const slash = this.add.circle(hitX, this.player.y - 46, 28, 0xffffff, 0.35).setDepth(4);
+    slash.setStrokeStyle(4, 0xffffff, 0.7);
+    this.tweens.add({ targets: slash, alpha: 0, scaleX: 1.7, scaleY: 1.2, duration: 120, onComplete: () => slash.destroy() });
 
     this.enemies.getChildren().forEach((enemy) => {
       if (!enemy.active) {
